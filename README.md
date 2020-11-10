@@ -9,4 +9,4 @@ cd abides
 pip install -r requirements.txt
 cd ..
 ```
-This will create a new folder `abides` into this folder. And that's it!
+This will create a new folder `abides` into this folder. And that's it, you're ready to go!
