@@ -2,7 +2,7 @@
 
 ## How to get the dependencies for this project
 ### Install ABIDES
-From inside the root folder (the one containing this readme) run the following lines on your terminal:
+From inside the root folder (the one containing this readme) just run `setup.sh` or the following lines on your terminal in case `setup.sh` would not collaborate (e.g. you're using Windows):
 ```bash
 git clone https://github.com/abides-sim/abides.git
 cd abides
