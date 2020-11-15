@@ -20,6 +20,24 @@ def create_orderbooks(exchange_path, ob_path):
     return processed_orderbook, transacted_orders, cleaned_orderbook
 
 
+
+# Some config files require additional command line parameters to easily
+# control agent or simulation hyperparameters during coarse parallelization.
+import argparse
+import sys
+
+parser = argparse.ArgumentParser(description='Configurations for specify the log-dir name.')
+parser.add_argument('-l', '--log_dir_name', default=None,
+                    help='Log directory name of the simulation to convert in CSV')
+
+args, remaining_args = parser.parse_known_args()
+
+if args.config_help:
+  parser.print_help()
+  sys.exit()
+
+log_dir_name = args.log_dir_name
+
 # our paths
 abides_log_path, data_path = "abides/log", "data"
 # eventually creates the data folder
@@ -27,35 +45,35 @@ if not exists(data_path):
     mkdir(data_path)
 
 # scans the abides folder for all the simulations
-for simulation_name in listdir(abides_log_path):
-    abides_simulation_path, data_simulation_path = join(abides_log_path, simulation_name), join(data_path,
-                                                                                                simulation_name)
-    # eventually creates the simulation folder into the data folder
-    if not exists(data_simulation_path):
-        os.mkdir(data_simulation_path)
-    # scans for the orderbooks and agents .bz2 files, saving them, for example:
-    # agent_filename = "ExchangeAgent0.bz2"
-    # orderbook_filenames = ["ORDERBOOK_JPM_FULL.bz2"]
-    agent_filename, orderbook_filenames = None, []
-    for file in os.listdir(abides_simulation_path):
-        if re.fullmatch(r"ORDERBOOK_.*\.bz2", file):
-            orderbook_filenames += [file]
-        if not agent_filename and re.fullmatch(r"ExchangeAgent.*\.bz2", file):
-            agent_filename = file
-    # saves the .csv into data/{simulation_name}
-    for orderbook_filename in orderbook_filenames:
-        # uncompresses the pickles
-        processed_orderbook, transacted_orders, cleaned_orderbook = create_orderbooks(
-            join(abides_simulation_path, agent_filename),
-            join(abides_simulation_path, orderbook_filename))
-        # saves .csv to files
-        orderbook_file_wo_extension = os.path.splitext(orderbook_filename)[0]
-        processed_orderbook.to_csv(
-            join(data_path, simulation_name, orderbook_file_wo_extension) + "_processed_orderbook" + ".csv",
-            index=True)
-        transacted_orders.to_csv(
-            join(data_path, simulation_name, orderbook_file_wo_extension) + "_transacted_orders" + ".csv",
-            index=True)
-        cleaned_orderbook.to_csv(
-            join(data_path, simulation_name, orderbook_file_wo_extension) + "_cleaned_orderbook" + ".csv",
-            index=True)
+
+abides_simulation_path, data_simulation_path = join(abides_log_path, log_dir_name), join(data_path,
+                                                                                         log_dir_name)
+# eventually creates the simulation folder into the data folder
+if not exists(data_simulation_path):
+    os.mkdir(data_simulation_path)
+# scans for the orderbooks and agents .bz2 files, saving them, for example:
+# agent_filename = "ExchangeAgent0.bz2"
+# orderbook_filenames = ["ORDERBOOK_JPM_FULL.bz2"]
+agent_filename, orderbook_filenames = None, []
+for file in os.listdir(abides_simulation_path):
+    if re.fullmatch(r"ORDERBOOK_.*\.bz2", file):
+        orderbook_filenames += [file]
+    if not agent_filename and re.fullmatch(r"ExchangeAgent.*\.bz2", file):
+        agent_filename = file
+# saves the .csv into data/{simulation_name}
+for orderbook_filename in orderbook_filenames:
+    # uncompresses the pickles
+    processed_orderbook, transacted_orders, cleaned_orderbook = create_orderbooks(
+        join(abides_simulation_path, agent_filename),
+        join(abides_simulation_path, orderbook_filename))
+    # saves .csv to files
+    orderbook_file_wo_extension = os.path.splitext(orderbook_filename)[0]
+    processed_orderbook.to_csv(
+        join(data_path, log_dir_name, orderbook_file_wo_extension) + "_processed_orderbook" + ".csv",
+        index=True)
+    transacted_orders.to_csv(
+        join(data_path, log_dir_name, orderbook_file_wo_extension) + "_transacted_orders" + ".csv",
+        index=True)
+    cleaned_orderbook.to_csv(
+        join(data_path, log_dir_name, orderbook_file_wo_extension) + "_cleaned_orderbook" + ".csv",
+        index=True)
