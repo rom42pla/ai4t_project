@@ -1,1 +1,1 @@
-bash scripts/get_abides.sh
+bash get_abides.sh
