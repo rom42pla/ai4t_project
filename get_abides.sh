@@ -1,5 +1,6 @@
 git clone https://github.com/Andrea94c/abides.git
-git checkout etf
 cd abides
+git checkout etf
+
 pip install -r requirements.txt
 cd ..
