@@ -137,6 +137,7 @@ class EtfArbAgent(TradingAgent):
     else:
       etf_mid = float()
       empty_mid = True
+    # to modify
     index_mid = np.sum(index_mids)
     return etf_mid, index_mid, etf_p, index_p, empty_mid
 
