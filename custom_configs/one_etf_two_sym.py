@@ -1,5 +1,7 @@
 from Kernel import Kernel
 from agent.ExchangeAgent import ExchangeAgent
+from agent.NoiseAgent import NoiseAgent
+from agent.ValueAgent import ValueAgent
 from agent.etf.EtfPrimaryAgent import EtfPrimaryAgent
 from agent.HeuristicBeliefLearningAgent import HeuristicBeliefLearningAgent
 from agent.examples.ImpactAgent import ImpactAgent
@@ -7,6 +9,8 @@ from agent.ZeroIntelligenceAgent import ZeroIntelligenceAgent
 from agent.examples.MomentumAgent import MomentumAgent
 from agent.etf.EtfArbAgent import EtfArbAgent
 from agent.etf.EtfMarketMakerAgent import EtfMarketMakerAgent
+from agent.execution.POVExecutionAgent import POVExecutionAgent
+from agent.market_makers.AdaptiveMarketMakerAgent import AdaptiveMarketMakerAgent
 from util.order import LimitOrder
 from util.oracle.MeanRevertingOracle import MeanRevertingOracle
 from util.oracle.SparseMeanRevertingOracle import SparseMeanRevertingOracle
@@ -95,9 +99,9 @@ MARKET
 # primary and secondary markets' hours
 midnight = pd.to_datetime('2020-06-15')
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('04:00:00'), \
-                                            midnight + pd.to_timedelta('09:30:00')
+                                            midnight + pd.to_timedelta('09:29:59')
 secondary_market_open, secondary_market_close = midnight + pd.to_timedelta('09:30:00'), \
-                                                midnight + pd.to_timedelta('16:00:00')
+                                                midnight + pd.to_timedelta('11:00:00')
 # symbols considered in the simulation
 symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
@@ -133,7 +137,7 @@ etfs_names, stocks_names = [symbol for symbol, infos in symbols_full.items() if 
 KERNEL
 '''
 starting_cents = 10000000
-kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('12:30:00')
+kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('20:00:00')
 defaultComputationDelay = 0  # no delay for this config
 
 kernel = Kernel("Base Kernel", random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))
@@ -148,61 +152,44 @@ num_agents, agents, agent_types = 0, [], []
 num_exchange_agents = 1
 # ETF primary agents
 num_etf_primary_agents = 1
-# zero intelligence agents
-num_zero_intelligence_agents = 10
-zero_intelligence_agents = [(int(num_zero_intelligence_agents / 7), 0, 250, 1),
-                            (int(num_zero_intelligence_agents / 7), 0, 500, 1),
-                            (int(num_zero_intelligence_agents / 7), 0, 1000, 0.8),
-                            (int(num_zero_intelligence_agents / 7), 0, 1000, 1),
-                            (int(num_zero_intelligence_agents / 7), 0, 2000, 0.8),
-                            (int(num_zero_intelligence_agents / 7), 250, 500, 0.8),
-                            (int(num_zero_intelligence_agents / 7), 250, 500, 1)]
-# heuristic belief agents
-num_heuristic_belief_agents = 200
-heuristic_belief_agents = [(int(num_heuristic_belief_agents / 5), 250, 500, 1, 2),
-                           (int(num_heuristic_belief_agents / 5), 250, 500, 1, 3),
-                           (int(num_heuristic_belief_agents / 5), 250, 500, 1, 5),
-                           (int(num_heuristic_belief_agents / 5), 250, 500, 1, 8)]
+# noise agents
+num_noise_agents = 500
+noise_mkt_open, noise_mkt_close = secondary_market_open + pd.to_timedelta("00:15:00"), \
+                                  secondary_market_close - pd.to_timedelta("00:15:00")
+# value agents
+num_value_agents = 10
+kappa = 1.67e-15
+lambda_a = 7e-11
 # momentum agents
-num_momentum_agents = 100
+num_momentum_agents = 3
 momentum_lookback = 10
 # etf arbitrage agents
 num_etf_arbitrage_agents = 10
 etf_arbitrage_agents_gamma = 250
 # market maker agents
-num_market_maker_agents = 10
-market_maker_agents = [(num_market_maker_agents, 250)]
+num_etf_market_maker_agents, num_pov_market_maker_agents = 1, 0
+etf_market_maker_agents_gamma = 250
 market_maker_agents_gamma = 100
+# pov execution agents
+num_pov_execution_agents = 0
+pov_agent_start_time, pov_agent_end_time = secondary_market_open + pd.to_timedelta('00:30:00'), \
+                                           secondary_market_close - pd.to_timedelta('00:30:00')
+pov_proportion_of_volume, pov_quantity, pov_frequency, pov_direction = 0.1, 12e5, "1min", "BUY"
 # impact agents
-impacts = {
-    "SYM1": ['09:32:00', '09:34:00'],
-    "SYM2": ['09:31:00', '09:33:00'],
-    "SYM3": ['09:33:00']
-}
+impacts = {}
 assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 
 '''
 EXCHANGE AGENTS
 '''
-agents.extend(
-    [ExchangeAgent(j, "Exchange Agent {}".format(j), "ExchangeAgent", secondary_market_open, secondary_market_close,
-                   list(symbols_full.keys()), log_orders=log_orders, pipeline_delay=0,
-                   computation_delay=0, stream_history=10, book_freq=book_freq,
-                   random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))
-     for j in range(num_agents, num_agents + num_exchange_agents)])
-agent_types.extend(["ExchangeAgent" for j in range(num_exchange_agents)])
-num_agents += num_exchange_agents
-
-'''
-ETF PRIMARY AGENTS
-'''
-agents.extend([EtfPrimaryAgent(j, "ETF Primary Agent {}".format(j), "EtfPrimaryAgent", primary_market_open,
-                               primary_market_close, 'ETF',
-                               pipeline_delay=0, computation_delay=0,
-                               random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))
-               for j in range(num_agents, num_agents + num_etf_primary_agents)])
-agent_types.extend(["EtfPrimeAgent" for j in range(num_etf_primary_agents)])
-num_agents += num_etf_primary_agents
+agents.append(
+    ExchangeAgent(num_agents, "Exchange Agent {}".format(num_agents), "ExchangeAgent",
+                  secondary_market_open, secondary_market_close,
+                  list(symbols_full.keys()), log_orders=log_orders, pipeline_delay=0,
+                  computation_delay=0, stream_history=10, book_freq=book_freq,
+                  random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
+agent_types.append("ExchangeAgent")
+num_agents += 1
 
 for symbol_name, infos in symbols_full.items():
     # this variable tells us if the symbol is a stock or an ETF
@@ -212,63 +199,75 @@ for symbol_name, infos in symbols_full.items():
         else np.sum([symbols_full[symbol]["r_bar"] for symbol in infos["portfolio"]])
 
     '''
-    IMPACT AGENTS
+    POV EXECUTION AGENTS
+    
+    for i in range(num_pov_execution_agents):
+        agents.append(POVExecutionAgent(id=num_agents,
+                                        name='POVExecutionAgent {}'.format(num_agents),
+                                        type='ExecutionAgent',
+                                        symbol=symbol_name, starting_cash=starting_cents,
+                                        start_time=pov_agent_start_time, end_time=pov_agent_end_time,
+                                        freq=pov_frequency,
+                                        lookback_period=pov_frequency,
+                                        pov=pov_proportion_of_volume,
+                                        direction=pov_direction,
+                                        quantity=pov_quantity,
+                                        log_orders=True,  # needed for plots so conflicts with others
+                                        random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
+                                                                                                  dtype='uint64'))))
+        agent_types.append("ExecutionAgent")
+        num_agents += 1 '''
+
     '''
+    IMPACT AGENTS
+    
     if symbol_name in impacts.keys():
         for itrades in impacts[symbol_name]:
-            impact_time = midnight + pd.to_timedelta(itrades)
             agents.append(
                 ImpactAgent(num_agents, "Impact Agent {} {}".format(symbol_name, num_agents),
                             "ImpactAgent{}{}".format(symbol_name, num_agents),
-                            symbol=symbol_name, starting_cash=starting_cents,
-                            impact=impact, impact_time=impact_time, greed=greed,
+                            symbol=symbol_name, starting_cash=starting_cents, greed=greed,
+                            impact=impact, impact_time=midnight + pd.to_timedelta(itrades),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("ImpactAgent {}".format(num_agents))
-            num_agents += 1
+            num_agents += 1'''
 
     '''
-    ZERO INTELLIGENCE AGENTS
+    NOISE AGENTS
     '''
-    for i, x in enumerate(zero_intelligence_agents):
-        strat_name = "Type {} [{} <= R <= {}, eta={}]".format(i + 1, x[1], x[2], x[3])
-        agents.extend([ZeroIntelligenceAgent(j, "ZI Agent {} {}".format(j, strat_name),
-                                             "ZeroIntelligenceAgent {}".format(strat_name),
-                                             random_state=np.random.RandomState(
-                                                 seed=np.random.randint(low=0, high=2 ** 32)), log_orders=log_orders,
-                                             symbol=symbol_name, starting_cash=starting_cents, sigma_n=sigma_n,
-                                             r_bar=r_bar, q_max=10,
-                                             sigma_pv=5000000, R_min=x[1], R_max=x[2], eta=x[3], lambda_a=1e-12)
-                       for j in range(num_agents, num_agents + x[0])])
-        agent_types.extend(["ZeroIntelligenceAgent {}".format(strat_name) for j in range(x[0])])
-        num_agents += x[0]
+    for i in range(num_noise_agents):
+        agents.append(NoiseAgent(id=num_agents, name="NoiseAgent {}".format(num_agents), type="NoiseAgent",
+                                 symbol=symbol_name, starting_cash=starting_cents,
+                                 wakeup_time=util.get_wake_time(noise_mkt_open, noise_mkt_close),
+                                 log_orders=log_orders,
+                                 random_state=np.random.RandomState(
+                                     seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))))
+        agent_types.append('NoiseAgent')
+        num_agents += 1
 
     '''
-    HEURISTIC BELIEF AGENTS
+    VALUE AGENTS
     '''
-    for i, x in enumerate(heuristic_belief_agents):
-        strat_name = "Type {} [{} <= R <= {}, eta={}, L={}]".format(i + 1, x[1], x[2], x[3], x[4])
-        agents.extend([HeuristicBeliefLearningAgent(j, "HBL Agent {} {}".format(j, strat_name),
-                                                    "HeuristicBeliefLearningAgent {}".format(strat_name),
-                                                    random_state=np.random.RandomState(
-                                                        seed=np.random.randint(low=0, high=2 ** 32)),
-                                                    log_orders=log_orders,
-                                                    symbol=symbol_name,
-                                                    starting_cash=starting_cents,
-                                                    sigma_n=sigma_n,
-                                                    r_bar=r_bar,
-                                                    # portfolio={'SYM1': s1['r_bar'], 'SYM2': s2['r_bar']},
-                                                    q_max=10,
-                                                    sigma_pv=5000000, R_min=x[1], R_max=x[2], eta=x[3], lambda_a=1e-12,
-                                                    L=x[4]) for j in range(num_agents, num_agents + x[0])])
-        agent_types.extend(["HeuristicBeliefLearningAgent {}".format(strat_name) for j in range(x[0])])
-        num_agents += x[0]
+    for i in range(num_value_agents):
+        agents.append(ValueAgent(id=num_agents, name="Value Agent {}".format(num_agents), type="ValueAgent",
+                                 symbol=symbol_name, starting_cash=starting_cents,
+                                 sigma_n=sigma_n,
+                                 r_bar=r_bar,
+                                 kappa=kappa,
+                                 lambda_a=lambda_a,
+                                 log_orders=log_orders,
+                                 random_state=np.random.RandomState(
+                                     seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))))
+        agent_types.append('ValueAgent')
+        num_agents += 1
 
     '''
     MOMENTUM AGENTS
     '''
-    for j in range(num_momentum_agents):
+    for i in range(num_momentum_agents):
         agents.append(
-            MomentumAgent(num_agents, "Momentum Agent {}".format(num_agents), type=None, max_size=100, min_size=1,
+            MomentumAgent(num_agents, "Momentum Agent {}".format(num_agents), type="MomentumAgent",
+                          min_size=1, max_size=10, wake_up_freq='20s',
                           symbol=symbol_name, starting_cash=starting_cents,
                           # lookback=lookback, -> al limite inserire in Trading Agent, per ora tolto
                           random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)),
@@ -276,8 +275,48 @@ for symbol_name, infos in symbols_full.items():
         agent_types.append("MomentumAgent {}".format(num_agents))
         num_agents += 1
 
-    if is_ETF:
+    if not is_ETF:
+        '''
+        POV MARKET MAKER AGENTS
+        '''
+        for i in range(num_pov_market_maker_agents):
+            agents.append(AdaptiveMarketMakerAgent(id=num_agents,
+                                                   name="ADAPTIVE_POV_MARKET_MAKER_AGENT_{}".format(num_agents),
+                                                   type='AdaptivePOVMarketMakerAgent',
+                                                   symbol=symbol_name,
+                                                   starting_cash=starting_cents,
+                                                   pov=0.025,
+                                                   min_order_size=1,
+                                                   window_size='adaptive',
+                                                   num_ticks=10,
+                                                   wake_up_freq="10S",
+                                                   cancel_limit_delay=50,
+                                                   skew_beta=0,
+                                                   level_spacing=5,
+                                                   spread_alpha=0.75,
+                                                   backstop_quantity=50000,
+                                                   log_orders=log_orders,
+                                                   random_state=np.random.RandomState(
+                                                       seed=np.random.randint(low=0, high=2 ** 32,
+                                                                              dtype='uint64'))))
+            agent_types.append('POVMarketMakerAgent')
+            num_agents += 1
+
+    elif is_ETF:
         portfolio = symbols_full[symbol_name]["portfolio"]
+
+        '''
+        ETF PRIMARY AGENTS
+        '''
+        for i in range(num_etf_primary_agents):
+            agents.append(EtfPrimaryAgent(num_agents, "ETF Primary Agent {}".format(num_agents), "EtfPrimaryAgent",
+                                          primary_market_open, primary_market_close, 'ETF',
+                                          pipeline_delay=0, computation_delay=0,
+                                          random_state=np.random.RandomState(
+                                              seed=np.random.randint(low=0, high=2 ** 32))))
+            agent_types.append("EtfPrimeAgent")
+            num_agents += 1
+
         '''
         ETF ARBITRAGE AGENTS
         '''
@@ -293,21 +332,20 @@ for symbol_name, infos in symbols_full.items():
             num_agents += 1
 
         '''
-        MARKET MAKER AGENTS
+        ETF MARKET MAKER AGENTS
         '''
-        for i, x in enumerate(market_maker_agents):
-            strat_name = "Type {} [gamma = {}]".format(i + 1, x[1])
-            agents.extend([EtfMarketMakerAgent(j,
-                                               "Etf MM Agent {} {}".format(j, strat_name),
-                                               "EtfMarketMakerAgent {}".format(strat_name),
-                                               portfolio=portfolio,
-                                               gamma=x[1], starting_cash=starting_cents, lambda_a=1e-9,
-                                               log_orders=log_orders,
-                                               random_state=np.random.RandomState(
-                                                   seed=np.random.randint(low=0, high=2 ** 32)))
-                           for j in range(num_agents, num_agents + x[0])])
-            agent_types.extend(["EtfMarketMakerAgent {}".format(strat_name) for j in range(x[0])])
-            num_agents += x[0]
+        for i in range(num_etf_market_maker_agents):
+            strat_name = "Type {} [gamma = {}]".format(num_agents, etf_market_maker_agents_gamma)
+            agents.append(EtfMarketMakerAgent(num_agents,
+                                              "Etf MM Agent {} {}".format(num_agents, strat_name),
+                                              "EtfMarketMakerAgent {}".format(strat_name),
+                                              portfolio=portfolio, starting_cash=starting_cents,
+                                              gamma=etf_market_maker_agents_gamma, lambda_a=1e-9,
+                                              log_orders=log_orders,
+                                              random_state=np.random.RandomState(
+                                                  seed=np.random.randint(low=0, high=2 ** 32))))
+            agent_types.append("EtfMarketMakerAgent {}".format(i))
+            num_agents += 1
 
 # This configures all agents to a starting latency as described above.
 # latency = np.random.uniform(low = 21000, high = 13000000, size=(len(agent_types),len(agent_types)))
