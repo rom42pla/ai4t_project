@@ -1,6 +1,18 @@
 #!/bin/bash
 
 sim_name="one_etf_two_sym"
+
+while getopts c: flag; do
+  case "${flag}" in
+  c) sim_name=${OPTARG} ;;
+  *) sim_name="one_etf_two_sym" ;;
+  esac
+done
+
+clear
+
+echo "Running simulation $sim_name"
+
 config_name=$sim_name
 seed_num=1234
 sim_path="../../../data/"$sim_name$seed_num"/"
@@ -13,7 +25,7 @@ bash update_custom_configs.sh
 
 # running the simulation:
 cd ../abides
- python -u abides.py -c $config_name -l $sim_name -b 0 -s $seed_num -o True
+python -u abides.py -c $config_name -l $sim_name -b 0 -s $seed_num -o True
 
 # plotting the results: (one image for each symbol)
 cd util/plotting/
@@ -23,8 +35,6 @@ python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2
 python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2 ../../log/$sim_name$seed_num/ORDERBOOK_SYM2_FULL.bz2 -o $img_path"SYM2_plot.png" -c configs/$plot_config".json"
 cd ../..
 
-
-
-# gets the csvs from the simulation
-cd ../scripts
-#python get_csv_simulations.py
+# gets the .csv from the simulation
+cd ..
+python get_csv_simulations.py

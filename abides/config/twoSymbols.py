@@ -184,7 +184,7 @@ mkt_open = midnight + pd.to_timedelta('09:30:00')
 
 # And close it at 9:30:00.000001 (i.e. 1,000 nanoseconds or "time steps")
 # mkt_close = midnight + pd.to_timedelta('09:30:00.001')
-mkt_close = midnight + pd.to_timedelta('15:30:00')
+mkt_close = midnight + pd.to_timedelta('10:00:00')
 
 # Configure an appropriate oracle for all traded stocks.
 # All agents requiring the same type of Oracle will use the same oracle instance.

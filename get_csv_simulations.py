@@ -8,17 +8,15 @@ from abides.realism.realism_utils import make_orderbook_for_analysis, MID_PRICE_
 
 
 def create_orderbooks(exchange_path, ob_path):
-    """ Creates orderbook DataFrames from ABIDES exchange output file and orderbook output file. """
-
-    processed_orderbook = make_orderbook_for_analysis(exchange_path, ob_path, num_levels=1,
-                                                      hide_liquidity_collapse=False)
-    cleaned_orderbook = processed_orderbook[(processed_orderbook['MID_PRICE'] > - MID_PRICE_CUTOFF) &
+    # creates orderbook DataFrames from ABIDES exchange output file and orderbook output file
+    processed_orderbook = make_orderbook_for_analysis(exchange_path, ob_path,
+                                                      num_levels=1, hide_liquidity_collapse=False)
+    cleaned_orderbook = processed_orderbook[(processed_orderbook['MID_PRICE'] >- MID_PRICE_CUTOFF) &
                                             (processed_orderbook['MID_PRICE'] < MID_PRICE_CUTOFF)]
     transacted_orders = cleaned_orderbook.loc[cleaned_orderbook.TYPE == "ORDER_EXECUTED"]
     transacted_orders['SIZE'] = transacted_orders['SIZE'] / 2
 
     return processed_orderbook, transacted_orders, cleaned_orderbook
-
 
 
 # parses console arguments
@@ -34,8 +32,8 @@ parser.add_argument('--config_help',
 args, remaining_args = parser.parse_known_args()
 
 if args.config_help:
-  parser.print_help()
-  sys.exit()
+    parser.print_help()
+    sys.exit()
 
 simulation_name_param = args.simulation_name
 
@@ -74,7 +72,7 @@ for simulation_name in simulations_names:
     # agent_filename = "ExchangeAgent0.bz2"
     # orderbook_filenames = ["ORDERBOOK_JPM_FULL.bz2"]
     agent_filename, orderbook_filenames = None, []
-    for file in os.listdir(abides_simulation_path):
+    for file in [path for path in os.listdir(abides_simulation_path) if not os.path.isfile(path)]:
         if re.fullmatch(r"ORDERBOOK_.*\.bz2", file):
             orderbook_filenames += [file]
         if not agent_filename and re.fullmatch(r"ExchangeAgent.*\.bz2", file):
