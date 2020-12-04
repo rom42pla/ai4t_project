@@ -98,8 +98,8 @@ MARKET
 '''
 # primary and secondary markets' hours
 midnight = pd.to_datetime('2020-06-15')
-primary_market_open, primary_market_close = midnight + pd.to_timedelta('04:00:00'), \
-                                            midnight + pd.to_timedelta('09:29:59')
+primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
+                                            midnight + pd.to_timedelta('17:01:00')
 secondary_market_open, secondary_market_close = midnight + pd.to_timedelta('09:30:00'), \
                                                 midnight + pd.to_timedelta('11:00:00')
 # symbols considered in the simulation
@@ -200,7 +200,7 @@ for symbol_name, infos in symbols_full.items():
 
     '''
     POV EXECUTION AGENTS
-    
+    '''
     for i in range(num_pov_execution_agents):
         agents.append(POVExecutionAgent(id=num_agents,
                                         name='POVExecutionAgent {}'.format(num_agents),
@@ -216,11 +216,11 @@ for symbol_name, infos in symbols_full.items():
                                         random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
                                                                                                   dtype='uint64'))))
         agent_types.append("ExecutionAgent")
-        num_agents += 1 '''
+        num_agents += 1
 
     '''
     IMPACT AGENTS
-    
+    '''
     if symbol_name in impacts.keys():
         for itrades in impacts[symbol_name]:
             agents.append(
@@ -230,7 +230,7 @@ for symbol_name, infos in symbols_full.items():
                             impact=impact, impact_time=midnight + pd.to_timedelta(itrades),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("ImpactAgent {}".format(num_agents))
-            num_agents += 1'''
+            num_agents += 1
 
     '''
     NOISE AGENTS
@@ -308,6 +308,7 @@ for symbol_name, infos in symbols_full.items():
         '''
         ETF PRIMARY AGENTS
         '''
+        
         for i in range(num_etf_primary_agents):
             agents.append(EtfPrimaryAgent(num_agents, "ETF Primary Agent {}".format(num_agents), "EtfPrimaryAgent",
                                           primary_market_open, primary_market_close, 'ETF',
