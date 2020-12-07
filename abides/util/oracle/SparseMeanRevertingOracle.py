@@ -213,20 +213,33 @@ class SparseMeanRevertingOracle(MeanRevertingOracle):
   # each agent will receive the same answers across multiple same-seed simulations
   # even if a new agent has been added to the experiment.
   def observePrice(self, symbol, currentTime, sigma_n = 1000, random_state = None):
-    # If the request is made after market close, return the close price.
-    if currentTime >= self.mkt_close:
-      r_t = self.advance_fundamental_value_series(self.mkt_close - pd.Timedelta('1ns'), symbol)
+    s = self.symbols[symbol]
+    is_etf = "portfolio" in s.keys()
+
+    if is_etf:
+      r_t = 0
+      for underlying_symbol, share in s["portfolio"].items():
+        # If the request is made after market close, return the close price.
+        if currentTime >= self.mkt_close:
+          r_t += share * self.advance_fundamental_value_series(self.mkt_close - pd.Timedelta('1ns'),
+                                                               underlying_symbol)
+        else:
+          r_t += share * self.advance_fundamental_value_series(currentTime, underlying_symbol)
     else:
-      r_t = self.advance_fundamental_value_series(currentTime, symbol)
- 
+      # If the request is made after market close, return the close price.
+      if currentTime >= self.mkt_close:
+        r_t = self.advance_fundamental_value_series(self.mkt_close - pd.Timedelta('1ns'), symbol)
+      else:
+        r_t = self.advance_fundamental_value_series(currentTime, symbol)
+
     # Generate a noisy observation of fundamental value at the current time.
     if sigma_n == 0:
       obs = r_t
     else:
       obs = int(round(random_state.normal(loc=r_t, scale=sqrt(sigma_n))))
- 
-    log_print ("Oracle: current fundamental value is {} at {}", r_t, currentTime)
-    log_print ("Oracle: giving client value observation {}", obs)
- 
+
+    log_print("Oracle: current fundamental value is {} at {}", r_t, currentTime)
+    log_print("Oracle: giving client value observation {}", obs)
+
     # Reminder: all simulator prices are specified in integer cents.
     return obs

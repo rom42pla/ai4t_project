@@ -74,7 +74,7 @@ class EtfMarketMakerAgent(EtfArbAgent):
                 self.getEtfNav()
                 self.state = 'AWAITING_NAV'
             elif not self.switched_mkt:
-                for i, s in enumerate(self.portfolio):
+                for i, s in enumerate(self.portfolio.keys()):
                     if s not in self.daily_close_price:
                         self.getLastTrade(s)
                         self.state = 'AWAITING_LAST_TRADE'
@@ -114,7 +114,7 @@ class EtfMarketMakerAgent(EtfArbAgent):
             # If the calling agent is a subclass, don't initiate the strategy section of wakeup(), as it
             # may want to do something different.
             # FIGURE OUT WHAT TO DO WITH MULTIPLE SPREADS...
-            for i, s in enumerate(self.portfolio):
+            for i, s in enumerate(self.portfolio.keys()):
                 self.getCurrentSpread(s)
             self.getCurrentSpread('ETF')
             self.state = 'AWAITING_SPREAD'
@@ -127,13 +127,13 @@ class EtfMarketMakerAgent(EtfArbAgent):
             pass
         elif (index_mid - etf_mid) > self.gamma:
             # print('buy ETF')
-            for i, s in enumerate(self.portfolio):
-                self.placeLimitOrder(s, 100, False, index_p[s]['bid'])  # vende sottostante e compra etf
+            for i, (s, share) in enumerate(self.portfolio.items()):
+                self.placeLimitOrder(s, share * 100, False, index_p[s]['bid'])  # vende sottostante e compra etf
             self.placeLimitOrder('ETF', 100, True, etf_p['ask'])
         elif (etf_mid - index_mid) > self.gamma:
             # print('sell ETF')
-            for i, s in enumerate(self.portfolio):  # {sym1, sym2}
-                self.placeLimitOrder(s, 100, True, index_p[s]['ask'])  # compra sottostante e vende etf
+            for i, (s, share) in enumerate(self.portfolio.items()):  # {sym1, sym2}
+                self.placeLimitOrder(s, share * 100, True, index_p[s]['ask'])  # compra sottostante e vende etf
             self.placeLimitOrder('ETF', 100, False, etf_p['bid'])
         else:
             pass
@@ -143,15 +143,16 @@ class EtfMarketMakerAgent(EtfArbAgent):
         print("\n\nHere the print we are looking for: ------------------------------------------")
         print(self.portfolio)
         index_est = 0
-        # to modify
-        for i, s in enumerate(self.portfolio):
-            index_est += self.daily_close_price[s]
+
+        for i, (s, share) in enumerate(self.portfolio.items()):
+            index_est += share * self.daily_close_price[s]
 
         H = {}
-        for i, s in enumerate(self.portfolio):
+        for i, s in enumerate(self.portfolio.keys()):
             H[s] = self.getHoldings(s)
         etf_h = self.getHoldings('ETF')
 
+        # --------------------------------------------------------------------- stopped here ------------------------------------------
         self.nav_diff = self.nav - index_est
         if self.nav_diff > 0:
             if min(H.values()) > 0 and etf_h < 0:
