@@ -258,7 +258,9 @@ def main(exchange_path, ob_path, title=None, outfile='liquidity_telemetry.png', 
     """ Processes orderbook from files, creates the liquidity telemetry plot and (optionally) prints statistics. """
 
     processed_orderbook, transacted_orders, cleaned_orderbook = create_orderbooks(exchange_path, ob_path)
+
     fundamental_ts = load_fundamental(ob_path)
+
 
     volume_hist = bin_and_sum(transacted_orders["SIZE"], PLOT_PARAMS_DICT['transacted_volume_binwidth'])
     counts, center, width = np_bar_plot_hist_input(volume_hist)
