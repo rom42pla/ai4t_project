@@ -3,16 +3,11 @@ from agent.ExchangeAgent import ExchangeAgent
 from agent.NoiseAgent import NoiseAgent
 from agent.ValueAgent import ValueAgent
 from agent.etf.EtfPrimaryAgent import EtfPrimaryAgent
-from agent.HeuristicBeliefLearningAgent import HeuristicBeliefLearningAgent
-from agent.examples.ImpactAgent import ImpactAgent
-from agent.ZeroIntelligenceAgent import ZeroIntelligenceAgent
 from agent.examples.MomentumAgent import MomentumAgent
 from agent.etf.EtfArbAgent import EtfArbAgent
 from agent.etf.EtfMarketMakerAgent import EtfMarketMakerAgent
-from agent.execution.POVExecutionAgent import POVExecutionAgent
 from agent.market_makers.AdaptiveMarketMakerAgent import AdaptiveMarketMakerAgent
 from util.order import LimitOrder
-from util.oracle.MeanRevertingOracle import MeanRevertingOracle
 from util.oracle.SparseMeanRevertingOracle import SparseMeanRevertingOracle
 from util import util
 
@@ -99,9 +94,9 @@ MARKET
 # primary and secondary markets' hours
 midnight = pd.to_datetime('2020-06-15')
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
-                                            midnight + pd.to_timedelta('17:01:00')
+                                            midnight + pd.to_timedelta('17:30:00')
 secondary_market_open, secondary_market_close = midnight + pd.to_timedelta('09:30:00'), \
-                                                midnight + pd.to_timedelta('11:00:00')
+                                                midnight + pd.to_timedelta('10:00:00')
 # symbols considered in the simulation
 symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
@@ -121,7 +116,8 @@ symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'ETF': {'r_bar': 100000, 'kappa': 2 * 1.67e-13, 'sigma_s': 0, 'portfolio': ['SYM1', 'SYM2', 'SYM3'],
+           'ETF': {'r_bar': 100000, 'kappa': 2 * 1.67e-13, 'sigma_s': 0,
+                   'portfolio': {'SYM1': 0.3, 'SYM2': 0.3, 'SYM3': 0.4},
                    'fund_vol': 1e-4,
                    'megashock_lambda_a': 2.77778e-13,
                    'megashock_mean': 0,
@@ -200,7 +196,7 @@ for symbol_name, infos in symbols_full.items():
 
     '''
     POV EXECUTION AGENTS
-    '''
+    
     for i in range(num_pov_execution_agents):
         agents.append(POVExecutionAgent(id=num_agents,
                                         name='POVExecutionAgent {}'.format(num_agents),
@@ -216,11 +212,11 @@ for symbol_name, infos in symbols_full.items():
                                         random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
                                                                                                   dtype='uint64'))))
         agent_types.append("ExecutionAgent")
-        num_agents += 1
+        num_agents += 1 '''
 
     '''
     IMPACT AGENTS
-    '''
+    
     if symbol_name in impacts.keys():
         for itrades in impacts[symbol_name]:
             agents.append(
@@ -230,7 +226,7 @@ for symbol_name, infos in symbols_full.items():
                             impact=impact, impact_time=midnight + pd.to_timedelta(itrades),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("ImpactAgent {}".format(num_agents))
-            num_agents += 1
+            num_agents += 1'''
 
     '''
     NOISE AGENTS
@@ -308,10 +304,9 @@ for symbol_name, infos in symbols_full.items():
         '''
         ETF PRIMARY AGENTS
         '''
-        
         for i in range(num_etf_primary_agents):
             agents.append(EtfPrimaryAgent(num_agents, "ETF Primary Agent {}".format(num_agents), "EtfPrimaryAgent",
-                                          primary_market_open, primary_market_close, 'ETF',
+                                          primary_market_open, primary_market_close, symbol_name,
                                           pipeline_delay=0, computation_delay=0,
                                           random_state=np.random.RandomState(
                                               seed=np.random.randint(low=0, high=2 ** 32))))

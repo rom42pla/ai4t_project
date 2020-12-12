@@ -117,7 +117,7 @@ symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
            'ETF': {'r_bar': 100000, 'kappa': 2 * 1.67e-13, 'sigma_s': 0,
-                   'portfolio': {'SYM1': 0.3, 'SYM2': 0.3, 'SYM3': 0.4},
+                   'portfolio': {'SYM1': 0.3, 'SYM2': 0.5, 'SYM3': 0.2},
                    'fund_vol': 1e-4,
                    'megashock_lambda_a': 2.77778e-13,
                    'megashock_mean': 0,

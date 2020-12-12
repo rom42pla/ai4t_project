@@ -1,11 +1,11 @@
 #!/bin/bash
 
-sim_name="one_etf_two_sym"
+sim_name="custom_etf"
 
 while getopts c: flag; do
   case "${flag}" in
   c) sim_name=${OPTARG} ;;
-  *) sim_name="one_etf_two_sym" ;;
+  *) sim_name="custom_etf" ;;
   esac
 done
 
@@ -25,7 +25,7 @@ bash update_custom_configs.sh
 
 # running the simulation:
 cd ../abides
-python -u abides.py -c $config_name -l $sim_name -b 0 -s $seed_num -o True
+#python -u abides.py -c $config_name -l $sim_name -b 0 -s $seed_num -o True
 
 # plotting the results: (one image for each symbol)
 cd util/plotting/
@@ -33,7 +33,7 @@ mkdir -p $img_path
 python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2 ../../log/$sim_name$seed_num/ORDERBOOK_ETF_FULL.bz2 -o $img_path"ETF_plot.png" -c configs/$plot_config".json"
 python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2 ../../log/$sim_name$seed_num/ORDERBOOK_SYM1_FULL.bz2 -o $img_path"SYM1_plot.png" -c configs/$plot_config".json"
 python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2 ../../log/$sim_name$seed_num/ORDERBOOK_SYM2_FULL.bz2 -o $img_path"SYM2_plot.png" -c configs/$plot_config".json"
-python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2 ../../log/$sim_name$seed_num/ORDERBOOK_SYM3_FULL.bz2 -o $img_path"SYM3_plot.png" -c configs/$plot_config".json"
+python -u liquidity_telemetry.py ../../log/$sim_name$seed_num/ExchangeAgent0.bz2 ../../log/$sim_name$seed_num/ORDERBOOK_SYM2_FULL.bz2 -o $img_path"SYM3_plot.png" -c configs/$plot_config".json"
 cd ../..
 
 # gets the .csv from the simulation
