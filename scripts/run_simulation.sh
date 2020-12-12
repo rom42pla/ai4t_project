@@ -25,7 +25,7 @@ bash update_custom_configs.sh
 
 # running the simulation:
 cd ../abides
-#python -u abides.py -c $config_name -l $sim_name -b 0 -s $seed_num -o True
+python -u abides.py -c $config_name -l $sim_name -b 0 -s $seed_num -o True
 
 # plotting the results: (one image for each symbol)
 cd util/plotting/
