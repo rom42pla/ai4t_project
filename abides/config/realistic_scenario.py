@@ -94,9 +94,9 @@ midnight = pd.to_datetime('2020-06-15')
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
                                             midnight + pd.to_timedelta('17:30:00')
 secondary_market_open, secondary_market_close = midnight + pd.to_timedelta('09:30:00'), \
-                                                midnight + pd.to_timedelta('12:00:00')
+                                                midnight + pd.to_timedelta('10:30:00')
 # symbols considered in the simulation
-symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
+symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
                     'megashock_lambda_a': 2.77778e-18,
                     'megashock_mean': 1e3,
@@ -108,13 +108,13 @@ symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
+           'SYM3': {'r_bar': 80000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
                     'megashock_lambda_a': 2.77778e-18,
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'ETF': {'r_bar': 100000, 'kappa': 2 * 1.67e-13, 'sigma_s': 0,
+           'ETF': {'r_bar': 300000, 'kappa': 3 * 1.67e-13, 'sigma_s': 0,
                    'portfolio': {'SYM1': 0.1, 'SYM2': 0.3, 'SYM3': 0.6},
                    'fund_vol': 1e-4,
                    'megashock_lambda_a': 2.77778e-13,
@@ -360,7 +360,7 @@ for symbol_name, infos in symbols_full.items():
                                               "Etf MM Agent {} {}".format(num_agents, strat_name),
                                               "EtfMarketMakerAgent {}".format(strat_name),
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=etf_market_maker_agents_gamma, lambda_a=1e-9,
+                                              gamma=etf_market_maker_agents_gamma, lambda_a=1e-8,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
