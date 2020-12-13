@@ -114,7 +114,7 @@ symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'ETF': {'r_bar': 300000, 'kappa': 3 * 1.67e-13, 'sigma_s': 0,
+           'ETF': {'r_bar': None, 'kappa': 3 * 1.67e-13, 'sigma_s': 0,
                    'portfolio': {'SYM1': 0.1, 'SYM2': 0.3, 'SYM3': 0.6},
                    'fund_vol': 1e-4,
                    'megashock_lambda_a': 2.77778e-13,
@@ -129,6 +129,8 @@ etfs_names, stocks_names = [symbol for symbol, infos in symbols_full.items() if 
                            [symbol for symbol, infos in symbols_full.items() if "portfolio" not in infos.keys()]
 for etf_name in etfs_names:
     assert np.sum(list(symbols_full[etf_name]["portfolio"].values())) == 1
+    symbols_full[etf_name]["r_bar"] = sum([share * symbols_full[sim]["r_bar"]
+                                           for sim, share in symbols_full[etf_name]["portfolio"].items()])
 '''
 KERNEL
 '''
@@ -162,12 +164,14 @@ num_momentum_agents = int(np.ceil(scale * 25))
 # etf arbitrage agents
 num_etf_arbitrage_agents = int(np.ceil(scale * 100))
 etf_arbitrage_agents_gamma = 250
-# market maker agents
-num_etf_market_maker_agents, num_pov_market_maker_agents = int(np.ceil(scale * 1)), int(np.ceil(scale * 1))
+# ETF market maker agents
+num_etf_market_maker_agents = int(np.ceil(scale * 50))
 etf_market_maker_agents_gamma = 250
+# market maker agents
+num_pov_market_maker_agents = int(np.ceil(scale * 1))
 market_maker_agents_gamma = 100
 # pov execution agents
-num_pov_execution_agents = int(np.ceil(scale * 1))
+num_pov_execution_agents = int(np.ceil(scale * 0))
 pov_agent_start_time, pov_agent_end_time = secondary_market_open + pd.to_timedelta('00:30:00'), \
                                            secondary_market_close - pd.to_timedelta('00:30:00')
 pov_proportion_of_volume, pov_quantity, pov_frequency, pov_direction = 0.1, 12e5, "1min", "BUY"
@@ -321,6 +325,7 @@ for symbol_name, infos in symbols_full.items():
                                                                               dtype='uint64'))))
             agent_types.append('POVMarketMakerAgent')
             num_agents += 1
+
 
     elif is_ETF:
         portfolio = symbols_full[symbol_name]["portfolio"]
