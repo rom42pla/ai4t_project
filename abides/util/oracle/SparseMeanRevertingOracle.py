@@ -88,10 +88,6 @@ class SparseMeanRevertingOracle(MeanRevertingOracle):
 
     def compute_fundamental_at_timestamp(self, ts, v_adj, symbol, pt, pv):
         s = self.symbols[symbol]
-        is_etf = "portfolio" in s.keys()
-
-        if is_etf:
-            pass
 
         # This oracle uses the Ornstein-Uhlenbeck Process.  It is quite close to being a
         # continuous version of the discrete mean reverting process used in the regular
@@ -172,7 +168,6 @@ class SparseMeanRevertingOracle(MeanRevertingOracle):
             msv = s['random_state'].normal(loc=s['megashock_mean'], scale=sqrt(s['megashock_var']))
             msv = msv if s['random_state'].randint(2) == 0 else -msv
 
-
             self.megashocks[symbol].append({'MegashockTime': mst, 'MegashockValue': msv})
 
             # The loop will continue until there are no more megashocks before the time requested
@@ -227,7 +222,6 @@ class SparseMeanRevertingOracle(MeanRevertingOracle):
 
             # Append the change to the permanent log of fundamental values for this symbol.
             self.f_log[symbol].append({'FundamentalTime': currentTime, 'FundamentalValue': r_t})
-
         else:
             # If the request is made after market close, return the close price.
             if currentTime >= self.mkt_close:

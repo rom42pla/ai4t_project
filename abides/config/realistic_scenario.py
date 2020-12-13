@@ -4,6 +4,7 @@ from agent.NoiseAgent import NoiseAgent
 from agent.ValueAgent import ValueAgent
 from agent.etf.EtfPrimaryAgent import EtfPrimaryAgent
 from agent.examples.MomentumAgent import MomentumAgent
+from agent.examples.ImpactAgent import ImpactAgent
 from agent.etf.EtfArbAgent import EtfArbAgent
 from agent.etf.EtfMarketMakerAgent import EtfMarketMakerAgent
 from agent.market_makers.AdaptiveMarketMakerAgent import AdaptiveMarketMakerAgent
@@ -41,7 +42,7 @@ parser.add_argument('-o', '--log_orders', action='store_true', default=True,
                     help='Log every order-related action by every agent.')
 parser.add_argument('-s', '--seed', type=int, default=1,
                     help='numpy.random.seed() for simulation')
-parser.add_argument('-sc', '--scale', type=float, default=0.2,
+parser.add_argument('-sc', '--scale', type=float, default=0.5,
                     help='Scale of the simulation (1 for all number of agents)')
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='Maximum verbosity!')
@@ -94,7 +95,7 @@ midnight = pd.to_datetime('2020-06-15')
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
                                             midnight + pd.to_timedelta('17:30:00')
 secondary_market_open, secondary_market_close = midnight + pd.to_timedelta('09:30:00'), \
-                                                midnight + pd.to_timedelta('10:30:00')
+                                                midnight + pd.to_timedelta('11:00:00')
 # symbols considered in the simulation
 symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
@@ -114,23 +115,25 @@ symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'ETF': {'r_bar': None, 'kappa': 3 * 1.67e-13, 'sigma_s': 0,
-                   'portfolio': {'SYM1': 0.1, 'SYM2': 0.3, 'SYM3': 0.6},
-                   'fund_vol': 1e-4,
-                   'megashock_lambda_a': 2.77778e-13,
-                   'megashock_mean': 0,
-                   'megashock_var': 5e4,
-                   'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
-                   'type': util.SymbolType.ETF}
+           'ETF': {
+               # 'portfolio': ['SYM1', 'SYM2'],
+               'portfolio': {'SYM1': 0.1, 'SYM2': 0.3, 'SYM3': 0.6},
+               'kappa': 3 * 1.67e-13, 'sigma_s': 0,
+               'fund_vol': 1e-4,
+               'megashock_lambda_a': 2.77778e-13,
+               'megashock_mean': 0,
+               'megashock_var': 5e4,
+               'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+               'type': util.SymbolType.ETF}
            }
-symbols_full = symbols.copy()
 # lists of names of stocks and ETF to distinguish between them
-etfs_names, stocks_names = [symbol for symbol, infos in symbols_full.items() if "portfolio" in infos.keys()], \
-                           [symbol for symbol, infos in symbols_full.items() if "portfolio" not in infos.keys()]
+etfs_names, stocks_names = [symbol for symbol, infos in symbols.items() if "portfolio" in infos.keys()], \
+                           [symbol for symbol, infos in symbols.items() if "portfolio" not in infos.keys()]
 for etf_name in etfs_names:
-    assert np.sum(list(symbols_full[etf_name]["portfolio"].values())) == 1
-    symbols_full[etf_name]["r_bar"] = sum([share * symbols_full[sim]["r_bar"]
-                                           for sim, share in symbols_full[etf_name]["portfolio"].items()])
+    assert np.sum(list(symbols[etf_name]["portfolio"].values())) == 1
+    symbols[etf_name]["r_bar"] = sum([share * symbols[symbol_name]["r_bar"]
+                                      for symbol_name, share in symbols[etf_name]["portfolio"].items()])
+symbols_full = symbols.copy()
 '''
 KERNEL
 '''
@@ -165,7 +168,7 @@ num_momentum_agents = int(np.ceil(scale * 25))
 num_etf_arbitrage_agents = int(np.ceil(scale * 100))
 etf_arbitrage_agents_gamma = 250
 # ETF market maker agents
-num_etf_market_maker_agents = int(np.ceil(scale * 50))
+num_etf_market_maker_agents = int(np.ceil(scale * 10))
 etf_market_maker_agents_gamma = 250
 # market maker agents
 num_pov_market_maker_agents = int(np.ceil(scale * 1))
@@ -188,7 +191,7 @@ print(pd.DataFrame(
         "event": ["Primary open", "Primary close",
                   "Secondary open", "Secondary close"],
         "date": [primary_market_open, primary_market_close,
-                   secondary_market_open, secondary_market_close]
+                 secondary_market_open, secondary_market_close]
     }
 ).sort_values(by=['date']).to_string(index=False))
 print(pd.DataFrame(
@@ -365,7 +368,7 @@ for symbol_name, infos in symbols_full.items():
                                               "Etf MM Agent {} {}".format(num_agents, strat_name),
                                               "EtfMarketMakerAgent {}".format(strat_name),
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=etf_market_maker_agents_gamma, lambda_a=1e-8,
+                                              gamma=etf_market_maker_agents_gamma, lambda_a=1e-9,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
