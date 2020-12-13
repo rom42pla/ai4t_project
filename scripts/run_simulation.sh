@@ -1,11 +1,11 @@
 #!/bin/bash
 
-sim_name="custom_etf"
+sim_name="realistic_scenario"
 
 while getopts c: flag; do
   case "${flag}" in
   c) sim_name=${OPTARG} ;;
-  *) sim_name="custom_etf" ;;
+  *) sim_name="realistic_scenario" ;;
   esac
 done
 
