@@ -1,4 +1,5 @@
 import pandas as pd
+
 pd.options.mode.chained_assignment = None
 import sys
 import os
@@ -13,8 +14,8 @@ from datetime import timedelta, datetime
 import argparse
 import json
 import matplotlib
-matplotlib.rcParams['agg.path.chunksize'] = 10000
 
+matplotlib.rcParams['agg.path.chunksize'] = 10000
 
 # PLOT_PARAMS_DICT = {
 #     'xmin': '09:32:00',
@@ -260,7 +261,6 @@ def main(exchange_path, ob_path, title=None, outfile='liquidity_telemetry.png', 
     processed_orderbook, transacted_orders, cleaned_orderbook = create_orderbooks(exchange_path, ob_path)
 
     fundamental_ts = load_fundamental(ob_path)
-
 
     volume_hist = bin_and_sum(transacted_orders["SIZE"], PLOT_PARAMS_DICT['transacted_volume_binwidth'])
     counts, center, width = np_bar_plot_hist_input(volume_hist)
