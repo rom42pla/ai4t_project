@@ -5,7 +5,7 @@ import argparse
 A R G U M E N T S
 P A R S I N G
 '''
-parser = argparse.ArgumentParser(description='Detailed options for momentum config.')
+parser = argparse.ArgumentParser(description='Run multiple ABIDES simulations in parallel')
 parser.add_argument('--configuration', type=str, default="realistic_scenario",
                     help='name of the configuration'
                          'inside custom_configs/')

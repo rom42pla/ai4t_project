@@ -23,7 +23,7 @@ python run_simulation.py
 cd ..
 ```
 
-```bash
+```
 usage: run_simulation.py [-h] [--configuration CONFIGURATION] [--seed SEED]
                          [--scale SCALE] [--plot_config PLOT_CONFIG]
 
@@ -50,7 +50,7 @@ python run_parallel_simulations.py
 cd ..
 ```
 
-```bash
+```
 usage: run_parallel_simulations.py [-h] [--configuration CONFIGURATION]
                                    [--scale SCALE]
                                    [--num_simulations NUM_SIMULATIONS]
