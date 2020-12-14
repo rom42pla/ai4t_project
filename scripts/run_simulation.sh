@@ -20,7 +20,7 @@ seed_num=1234
 sim_path="../../../data/"$sim_name$seed_num"/"
 
 img_path=$sim_path"plots/"
-plot_config="10min_plot_config"
+plot_config="plot_09.30_11.30"
 
 # updates our custom configurations into ABIDES' folder
 bash update_custom_configs.sh

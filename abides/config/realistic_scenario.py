@@ -190,6 +190,7 @@ def dates_linspace(start, stop, num):
 impacts = {
     "ETF": [{"starting_cash": starting_cents * 2,
              "time": time,
+             "symbol": "ETF",
              "greed": 0.25}
             for time in dates_linspace(start="10:00:00", stop="10:01:00", num=10)]
 }
@@ -219,10 +220,7 @@ print(pd.DataFrame(
                    num_etf_primary_agents, num_etf_market_maker_agents, num_etf_arbitrage_agents]
     }
 ).to_string(index=False))
-print(pd.DataFrame(
-    data=[impacts[symbol_name] for symbol_name in impacts.keys()],
-).to_string(index=False))
-exit()
+
 '''
 EXCHANGE AGENTS
 '''
