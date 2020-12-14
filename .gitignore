@@ -1,2 +1,7 @@
 /data/
+!/data/.gitkeep
+
 /abides/log/
+!/abides/log/.gitkeep
+
+/.idea/
