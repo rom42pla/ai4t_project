@@ -28,7 +28,7 @@ parser.add_argument('-c', '--config', required=True,
                     help='Name of config file to execute')
 parser.add_argument('-g', '--greed', type=float, default=0.25,
                     help='Impact agent greed')
-parser.add_argument('-i', '--impact', action='store_false',
+parser.add_argument('-i', '--impact', action='store_true',
                     help='Do not actually fire an impact trade.', default=True)
 parser.add_argument('-l', '--log_dir', default="twosym",
                     help='Log directory name (default: unix timestamp at program start)')
@@ -172,7 +172,9 @@ pov_agent_start_time, pov_agent_end_time = secondary_market_open + pd.to_timedel
                                            secondary_market_close - pd.to_timedelta('00:30:00')
 pov_proportion_of_volume, pov_quantity, pov_frequency, pov_direction = 0.1, 12e5, "1min", "BUY"
 # impact agents
-impacts = {}
+impacts = {
+    "ETF": ["10:05:00", "10:15:00"]
+}
 assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 
 '''
@@ -196,7 +198,7 @@ for symbol_name, infos in symbols_full.items():
 
     '''
     POV EXECUTION AGENTS
-    
+    '''
     for i in range(num_pov_execution_agents):
         agents.append(POVExecutionAgent(id=num_agents,
                                         name='POVExecutionAgent {}'.format(num_agents),
@@ -212,11 +214,11 @@ for symbol_name, infos in symbols_full.items():
                                         random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
                                                                                                   dtype='uint64'))))
         agent_types.append("ExecutionAgent")
-        num_agents += 1 '''
+        num_agents += 1
 
     '''
     IMPACT AGENTS
-    
+    '''
     if symbol_name in impacts.keys():
         for itrades in impacts[symbol_name]:
             agents.append(
@@ -226,7 +228,7 @@ for symbol_name, infos in symbols_full.items():
                             impact=impact, impact_time=midnight + pd.to_timedelta(itrades),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("ImpactAgent {}".format(num_agents))
-            num_agents += 1'''
+            num_agents += 1
 
     '''
     NOISE AGENTS

@@ -119,7 +119,7 @@ class EtfArbAgent(TradingAgent):
         empty_mid = False
         for i, (s, share) in enumerate(self.portfolio.items()):
             bid, bid_vol, ask, ask_vol = self.getKnownBidAsk(s)
-            if bid != None and ask != None:
+            if bid is not None and ask is not None:
                 index_p[s] = {'bid': bid, 'ask': ask}
                 mid = 0.5 * (int(bid) + int(ask))
             else:
@@ -129,12 +129,11 @@ class EtfArbAgent(TradingAgent):
             index_mids[i] = share * mid
         bid, bid_vol, ask, ask_vol = self.getKnownBidAsk('ETF')
         etf_p = {'bid': bid, 'ask': ask}
-        if bid != None and ask != None:
+        if bid is not None and ask is not None:
             etf_mid = 0.5 * (int(bid) + int(ask))
         else:
             etf_mid = float()
             empty_mid = True
-        # to modify
         index_mid = np.sum(index_mids)
         return etf_mid, index_mid, etf_p, index_p, empty_mid
 

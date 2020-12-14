@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sim_name="realistic_scenario"
-scale="0.2"
+scale="0.5"
 
 while getopts c:s: flag; do
   case "${flag}" in

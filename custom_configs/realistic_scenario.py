@@ -30,7 +30,7 @@ parser.add_argument('-c', '--config', required=True,
                     help='Name of config file to execute')
 parser.add_argument('-g', '--greed', type=float, default=0.25,
                     help='Impact agent greed')
-parser.add_argument('-i', '--impact', action='store_false',
+parser.add_argument('-i', '--impact', action='store_true',
                     help='Do not actually fire an impact trade.', default=True)
 parser.add_argument('-l', '--log_dir', default="realistic_scenario",
                     help='Log directory name (default: unix timestamp at program start)')
@@ -178,8 +178,22 @@ num_pov_execution_agents = int(np.ceil(scale * 0))
 pov_agent_start_time, pov_agent_end_time = secondary_market_open + pd.to_timedelta('00:30:00'), \
                                            secondary_market_close - pd.to_timedelta('00:30:00')
 pov_proportion_of_volume, pov_quantity, pov_frequency, pov_direction = 0.1, 12e5, "1min", "BUY"
+
+
 # impact agents
-impacts = {}
+def dates_linspace(start, stop, num):
+    return list([str(l.time()) for l in pd.to_datetime(np.linspace((midnight + pd.to_timedelta(start)).value,
+                                                                   (midnight + pd.to_timedelta(stop)).value,
+                                                                   num=num))])
+
+
+impacts = {
+    "ETF": [{"starting_cash": starting_cents * 2,
+             "time": time,
+             "symbol": "ETF",
+             "greed": 0.25}
+            for time in dates_linspace(start="10:00:00", stop="10:01:00", num=10)]
+}
 assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 
 '''
@@ -250,12 +264,12 @@ for symbol_name, infos in symbols_full.items():
     IMPACT AGENTS
     '''
     if symbol_name in impacts.keys():
-        for itrades in impacts[symbol_name]:
+        for impact_dict in impacts[symbol_name]:
             agents.append(
                 ImpactAgent(num_agents, "Impact Agent {} {}".format(symbol_name, num_agents),
                             "ImpactAgent{}{}".format(symbol_name, num_agents),
-                            symbol=symbol_name, starting_cash=starting_cents, greed=greed,
-                            impact=impact, impact_time=midnight + pd.to_timedelta(itrades),
+                            symbol=symbol_name, starting_cash=impact_dict["starting_cash"], greed=impact_dict["greed"],
+                            impact=impact, impact_time=midnight + pd.to_timedelta(impact_dict["time"]),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("ImpactAgent {}".format(num_agents))
             num_agents += 1
@@ -263,7 +277,7 @@ for symbol_name, infos in symbols_full.items():
     '''
     NOISE AGENTS
     '''
-    for i in range(num_noise_agents):
+    for i in range(num_noise_agents if not is_ETF else int(num_noise_agents * 1.5)):
         agents.append(NoiseAgent(id=num_agents, name="NoiseAgent {}".format(num_agents), type="NoiseAgent",
                                  symbol=symbol_name, starting_cash=starting_cents,
                                  wakeup_time=util.get_wake_time(noise_mkt_open, noise_mkt_close),
@@ -302,33 +316,34 @@ for symbol_name, infos in symbols_full.items():
         agent_types.append("MomentumAgent {}".format(num_agents))
         num_agents += 1
 
-    if not is_ETF:
-        '''
-        POV MARKET MAKER AGENTS
-        '''
-        for i in range(num_pov_market_maker_agents):
-            agents.append(AdaptiveMarketMakerAgent(id=num_agents,
-                                                   name="ADAPTIVE_POV_MARKET_MAKER_AGENT_{}".format(num_agents),
-                                                   type='AdaptivePOVMarketMakerAgent',
-                                                   symbol=symbol_name,
-                                                   starting_cash=starting_cents,
-                                                   pov=0.025,
-                                                   min_order_size=1,
-                                                   window_size='adaptive',
-                                                   num_ticks=10,
-                                                   wake_up_freq="10S",
-                                                   cancel_limit_delay=50,
-                                                   skew_beta=0,
-                                                   level_spacing=5,
-                                                   spread_alpha=0.75,
-                                                   backstop_quantity=50000,
-                                                   log_orders=log_orders,
-                                                   random_state=np.random.RandomState(
-                                                       seed=np.random.randint(low=0, high=2 ** 32,
-                                                                              dtype='uint64'))))
-            agent_types.append('POVMarketMakerAgent')
-            num_agents += 1
+    '''
+    POV MARKET MAKER AGENTS
+    '''
+    for i in range(num_pov_market_maker_agents):
+        agents.append(AdaptiveMarketMakerAgent(id=num_agents,
+                                               name="ADAPTIVE_POV_MARKET_MAKER_AGENT_{}".format(num_agents),
+                                               type='AdaptivePOVMarketMakerAgent',
+                                               symbol=symbol_name,
+                                               starting_cash=starting_cents,
+                                               pov=0.025,
+                                               min_order_size=1,
+                                               window_size='adaptive',
+                                               num_ticks=10,
+                                               wake_up_freq="10S",
+                                               cancel_limit_delay=50,
+                                               skew_beta=0,
+                                               level_spacing=5,
+                                               spread_alpha=0.75,
+                                               backstop_quantity=50000,
+                                               log_orders=log_orders,
+                                               random_state=np.random.RandomState(
+                                                   seed=np.random.randint(low=0, high=2 ** 32,
+                                                                          dtype='uint64'))))
+        agent_types.append('POVMarketMakerAgent')
+        num_agents += 1
 
+    if not is_ETF:
+        pass
 
     elif is_ETF:
         portfolio = symbols_full[symbol_name]["portfolio"]

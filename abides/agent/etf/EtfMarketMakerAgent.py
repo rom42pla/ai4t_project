@@ -152,7 +152,6 @@ class EtfMarketMakerAgent(EtfArbAgent):
             H[s] = self.getHoldings(s)
         etf_h = self.getHoldings('ETF')
 
-        # --------------------------------------------------------------------- stopped here ------------------------------------------
         self.nav_diff = self.nav - index_est
         if self.nav_diff > 0:
             if min(H.values()) > 0 and etf_h < 0:
