@@ -55,7 +55,7 @@ usage: run_parallel_simulations.py [-h] [--configuration CONFIGURATION]
                                    [--scale SCALE]
                                    [--num_simulations NUM_SIMULATIONS]
 
-Detailed options for momentum config.
+Run multiple ABIDES simulations in parallel
 
 optional arguments:
   -h, --help            show this help message and exit
