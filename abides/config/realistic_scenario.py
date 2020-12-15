@@ -48,8 +48,14 @@ parser.add_argument('-v', '--verbose', action='store_true',
                     help='Maximum verbosity!')
 parser.add_argument('--config_help', action='store_true',
                     help='Print argument options for this config file')
-parser.add_argument('--hours', type=float, default=2,
-                    help='hours of simulation to reproduce')
+parser.add_argument('--hours', type=float, default=8,
+                    help='hours of simulation to reproduce,'
+                         'starting always from 09:00AM up to 17:00PM')
+parser.add_argument('--num_impacts', type=int, default=1,
+                    help='number of impacts on the ETF, '
+                         'equally distributed during the simulation')
+parser.add_argument('--impacts_greed', type=float, default=0.5,
+                    help='percentage of money used by impact agents')
 
 args, remaining_args = parser.parse_known_args()
 
@@ -97,7 +103,7 @@ midnight, hours = pd.to_datetime('2020-06-15'), args.hours
 assert 1 <= hours <= 8
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
                                             midnight + pd.to_timedelta('17:30:00')
-secondary_market_open = midnight + pd.to_timedelta('09:30:00')
+secondary_market_open = midnight + pd.to_timedelta('09:00:00')
 secondary_market_close = secondary_market_open + pd.Timedelta(hours, unit="hours")
 # symbols considered in the simulation
 symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
@@ -185,17 +191,31 @@ pov_proportion_of_volume, pov_quantity, pov_frequency, pov_direction = 0.1, 12e5
 
 # impact agents
 def dates_linspace(start, stop, num):
-    return list([str(l.time()) for l in pd.to_datetime(np.linspace((midnight + pd.to_timedelta(start)).value,
-                                                                   (midnight + pd.to_timedelta(stop)).value,
-                                                                   num=num))])
+    if not isinstance(start, pd.Timestamp):
+        start = midnight + pd.to_timedelta(start)
+    if not isinstance(stop, pd.Timestamp):
+        stop = midnight + pd.to_timedelta(stop)
+    return list([str(l.time()) for l in pd.to_datetime(np.linspace(start.value,
+                                                                   stop.value,
+                                                                   num=num, endpoint=True))])
 
+
+num_impacts, impacts_greed = args.num_impacts, \
+                             args.impacts_greed
+assert num_impacts >= 0
+assert 0 < impacts_greed <= 1
 
 impacts = {
     "ETF": [{"starting_cash": starting_cents * 2,
-             "time": time,
+             "time": subimpact_time,
              "symbol": "ETF",
-             "greed": 0.25}
-            for time in dates_linspace(start="10:00:00", stop="10:01:00", num=10)]
+             "greed": impacts_greed}
+            for impact_time in dates_linspace(start=secondary_market_open + pd.Timedelta(0, unit="minutes"),
+                                              stop=secondary_market_close,
+                                              num=num_impacts + 2)[1:-1]
+            for subimpact_time in dates_linspace(start=impact_time - pd.Timedelta(30, unit="seconds"),
+                                                 stop=impact_time + pd.Timedelta(30, unit="seconds"),
+                                                 num=6)]
 }
 assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 
