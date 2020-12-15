@@ -11,7 +11,7 @@ def create_orderbooks(exchange_path, ob_path):
     # creates orderbook DataFrames from ABIDES exchange output file and orderbook output file
     processed_orderbook = make_orderbook_for_analysis(exchange_path, ob_path,
                                                       num_levels=1, hide_liquidity_collapse=False)
-    cleaned_orderbook = processed_orderbook[(processed_orderbook['MID_PRICE'] >- MID_PRICE_CUTOFF) &
+    cleaned_orderbook = processed_orderbook[(processed_orderbook['MID_PRICE'] > - MID_PRICE_CUTOFF) &
                                             (processed_orderbook['MID_PRICE'] < MID_PRICE_CUTOFF)]
     transacted_orders = cleaned_orderbook.loc[cleaned_orderbook.TYPE == "ORDER_EXECUTED"]
     transacted_orders['SIZE'] = transacted_orders['SIZE'] / 2
@@ -24,16 +24,9 @@ import argparse
 import sys
 
 parser = argparse.ArgumentParser(description='Configurations')
-parser.add_argument('-n', '--simulation_name', type=str, default=None,
+parser.add_argument('--simulation_name', type=str, default=None,
                     help='Log directory path of the ABIDES simulation to convert to .csv')
-parser.add_argument('--config_help',
-                    help='Print this help message and exit')
-
-args, remaining_args = parser.parse_known_args()
-
-if args.config_help:
-    parser.print_help()
-    sys.exit()
+args = parser.parse_args()
 
 simulation_name_param = args.simulation_name
 

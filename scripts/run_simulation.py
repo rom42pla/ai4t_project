@@ -53,12 +53,12 @@ print(f"Running simulation {configuration} with seed {seed} and {scale} scale fo
 
 # updates our custom configurations into ABIDES' folder
 os.system("python update_custom_configs.py")
-
+'''
 # launches the simulation
 os.system(f"cd ../abides;"
           f"python -u abides.py -c {configuration} -l {configuration} -b 0 -s {seed} -o True -sc {scale} --hours {hours} "
           f"--num_impacts {num_impacts} --impacts_greed {impacts_greed}")
-
+'''
 # prepares the data folders
 data_path = join("..", "data")
 if not exists(data_path):
@@ -68,7 +68,7 @@ simulation_plots_path = join(simulation_path, f"plots")
 if not exists(simulation_path):
     mkdir(simulation_path)
     mkdir(simulation_plots_path)
-
+'''
 # .json template for the plots
 secondary_market_open = pd.to_timedelta("09:00:00")
 secondary_market_close = secondary_market_open + pd.Timedelta(hours, unit="hours")
@@ -96,5 +96,8 @@ os.system(f"cd ../abides/util/plotting/;"
 # eventually visualizes the charts in an app
 os.system(f"cd ..;"
           f"fim data/{configuration}{seed}/plots/;")
+'''
+# gets .csv of the simulation
+os.system(f"cd ..; ls; python get_csv_simulations.py --simulation_name {configuration}{seed}")
 
 print(f"Ended simulation {configuration} with seed {seed} and {scale} scale for {hours} hours")
