@@ -10,32 +10,37 @@ parser = argparse.ArgumentParser(description='Run an ABIDES simulation')
 parser.add_argument('--configuration', type=str, default="realistic_scenario",
                     help='name of the configuration to use,'
                          'inside custom_configs/')
+parser.add_argument('--plot_config', type=str, default="plot_realistic_scenario",
+                    help='name of the .json with the parameters of the plot,'
+                         'inside abides/util/plotting/configs/')
 parser.add_argument('--seed', type=int, default=np.random.randint(100, 999999),
                     help='seed of the simulation')
 parser.add_argument('--scale', type=float, default=1,
                     help='scale of the simulation (proportion of agents wrt full simulation)')
-parser.add_argument('--plot_config', type=str, default="plot_realistic_scenario",
-                    help='name of the .json with the parameters of the plot,'
-                         'inside abides/util/plotting/configs/')
+parser.add_argument('--hours', type=float, default=8,
+                    help='hours of simulation to reproduce,'
+                         'starting always from 09:00AM up to 17:00PM')
 args = parser.parse_args()
 
 # retrieves the arguments
-configuration, seed, scale, plot_config = args.configuration, \
-                                          args.seed, \
-                                          args.scale, \
-                                          args.plot_config
+configuration, plot_config, seed, scale, hours = args.configuration, \
+                                                 args.plot_config, \
+                                                 args.seed, \
+                                                 args.scale, \
+                                                 args.hours
+assert 1 <= hours <= 8
 
 '''
 S I M U L A T I O N
 '''
-print(f"Running simulation {configuration} with seed {seed} and {scale} scale")
+print(f"Running simulation {configuration} with seed {seed} and {scale} scale for {hours} hours")
 
 # updates our custom configurations into ABIDES' folder
 os.system("python update_custom_configs.py")
 
 # launches the simulation
 os.system(f"cd ../abides;"
-          f"python -u abides.py -c {configuration} -l {configuration} -b 0 -s {seed} -o True -sc {scale}")
+          f"python -u abides.py -c {configuration} -l {configuration} -b 0 -s {seed} -o True -sc {scale} --hours {hours}")
 
 # plots the charts
 os.system(f"cd ..;"

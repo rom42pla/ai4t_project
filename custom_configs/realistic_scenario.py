@@ -48,6 +48,9 @@ parser.add_argument('-v', '--verbose', action='store_true',
                     help='Maximum verbosity!')
 parser.add_argument('--config_help', action='store_true',
                     help='Print argument options for this config file')
+parser.add_argument('--hours', type=float, default=8,
+                    help='hours of simulation to reproduce,'
+                         'starting always from 09:00AM up to 17:00PM')
 
 args, remaining_args = parser.parse_known_args()
 
@@ -91,11 +94,12 @@ print("Configuration seed: {}\n".format(seed))
 MARKET
 '''
 # primary and secondary markets' hours
-midnight = pd.to_datetime('2020-06-15')
+midnight, hours = pd.to_datetime('2020-06-15'), args.hours
+assert 1 <= hours <= 8
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
                                             midnight + pd.to_timedelta('17:30:00')
-secondary_market_open, secondary_market_close = midnight + pd.to_timedelta('09:30:00'), \
-                                                midnight + pd.to_timedelta('10:30:00')
+secondary_market_open = midnight + pd.to_timedelta('09:00:00')
+secondary_market_close = secondary_market_open + pd.Timedelta(hours, unit="hours")
 # symbols considered in the simulation
 symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
