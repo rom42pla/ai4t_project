@@ -24,31 +24,31 @@ DATA_DIR = "~/data"
 import argparse
 
 parser = argparse.ArgumentParser(description='Detailed options for momentum config.')
+# configuration settings
+parser.add_argument('-v', '--verbose', action='store_true',
+                    help='Maximum verbosity!')
 parser.add_argument('-b', '--book_freq', default=0,
                     help='Frequency at which to archive order book for visualization')
-parser.add_argument('-c', '--config', required=True,
-                    help='Name of config file to execute')
-parser.add_argument('-g', '--greed', type=float, default=0.25,
-                    help='Impact agent greed')
 parser.add_argument('-l', '--log_dir', default="realistic_scenario",
                     help='Log directory name (default: unix timestamp at program start)')
-parser.add_argument('-n', '--obs_noise', type=float, default=1000000,
-                    help='Observation noise variance for zero intelligence agents (sigma^2_n)')
-parser.add_argument('-r', '--shock_variance', type=float, default=500000,
-                    help='Shock variance for mean reversion process (sigma^2_s)')
+parser.add_argument('-c', '--config', required=True,
+                    help='Name of config file to execute')
+parser.add_argument('-sc', '--scale', type=float, default=0.5,
+                    help='Scale of the simulation (1 for all number of agents)')
+parser.add_argument('--hours', type=float, default=8,
+                    help='hours of simulation to reproduce,'
+                         'starting always from 09:00AM up to 17:00PM')
 parser.add_argument('-o', '--log_orders', action='store_true', default=True,
                     help='Log every order-related action by every agent.')
 parser.add_argument('-s', '--seed', type=int, default=1,
                     help='numpy.random.seed() for simulation')
-parser.add_argument('-sc', '--scale', type=float, default=0.5,
-                    help='Scale of the simulation (1 for all number of agents)')
-parser.add_argument('-v', '--verbose', action='store_true',
-                    help='Maximum verbosity!')
-parser.add_argument('--config_help', action='store_true',
-                    help='Print argument options for this config file')
-parser.add_argument('--hours', type=float, default=8,
-                    help='hours of simulation to reproduce,'
-                         'starting always from 09:00AM up to 17:00PM')
+# kernel and oracle settings
+parser.add_argument('-r', '--shock_variance', type=float, default=500000,
+                    help='Shock variance for mean reversion process (sigma^2_s)')
+# agents settings
+parser.add_argument('-n', '--obs_noise', type=float, default=1000000,
+                    help='Observation noise variance for zero intelligence agents (sigma^2_n)')
+
 parser.add_argument('--num_impacts', type=int, default=1,
                     help='number of impacts on the ETF, '
                          'equally distributed during the simulation')
@@ -56,10 +56,6 @@ parser.add_argument('--impacts_greed', type=float, default=0.5,
                     help='percentage of money used by impact agents')
 
 args, remaining_args = parser.parse_known_args()
-
-if args.config_help:
-    parser.print_help()
-    sys.exit()
 
 seed = args.seed
 # Requested log directory.
@@ -119,7 +115,6 @@ symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
            'ETF': {
-               # 'portfolio': ['SYM1', 'SYM2'],
                'portfolio': {'SYM1': 0.1, 'SYM2': 0.3, 'SYM3': 0.6},
                'kappa': 3 * 1.67e-13, 'sigma_s': 0,
                'fund_vol': 1e-4,
