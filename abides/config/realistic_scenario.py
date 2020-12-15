@@ -30,8 +30,6 @@ parser.add_argument('-c', '--config', required=True,
                     help='Name of config file to execute')
 parser.add_argument('-g', '--greed', type=float, default=0.25,
                     help='Impact agent greed')
-parser.add_argument('-i', '--impact', action='store_true',
-                    help='Do not actually fire an impact trade.', default=True)
 parser.add_argument('-l', '--log_dir', default="realistic_scenario",
                     help='Log directory name (default: unix timestamp at program start)')
 parser.add_argument('-n', '--obs_noise', type=float, default=1000000,
@@ -72,10 +70,6 @@ book_freq = args.book_freq
 sigma_n = args.obs_noise
 # Shock variance of mean reversion process.
 sigma_s = args.shock_variance
-# Impact agent greed.
-greed = args.greed
-# Should the impact agent actually trade?
-impact = args.impact
 
 if seed is not None:
     seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
@@ -297,7 +291,7 @@ for symbol_name, infos in symbols_full.items():
                 ImpactAgent(len(agents), "Impact Agent {} {}".format(symbol_name, len(agents)),
                             "ImpactAgent{}{}".format(symbol_name, len(agents)),
                             symbol=symbol_name, starting_cash=impact_dict["starting_cash"], greed=impact_dict["greed"],
-                            impact=impact, impact_time=midnight + pd.to_timedelta(impact_dict["time"]),
+                            impact=True, impact_time=midnight + pd.to_timedelta(impact_dict["time"]),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("ImpactAgent {}".format(len(agents)))
 

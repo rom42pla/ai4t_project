@@ -19,6 +19,7 @@ parser.add_argument('--scale', type=float, default=1,
 parser.add_argument('--hours', type=float, default=8,
                     help='hours of simulation to reproduce, '
                          'starting always from 09:00AM up to 17:00PM')
+
 parser.add_argument('--num_impacts', type=int, default=1,
                     help='number of impacts on the ETF, '
                          'equally distributed during the simulation')
