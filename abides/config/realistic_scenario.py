@@ -137,7 +137,7 @@ KERNEL
 '''
 scale = args.scale
 starting_cents = 100000 * 100  # cash is always in cents
-kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('47:00:00')
+kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('22:00:00')
 defaultComputationDelay = 0  # no delay for this config
 
 kernel = Kernel("Base Kernel", random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))
@@ -153,7 +153,7 @@ num_exchange_agents = 1
 # ETF primary agents
 num_etf_primary_agents = 1
 # noise agents
-num_noise_agents = int(np.ceil(scale * 5000))
+num_noise_agents = 0 #int(np.ceil(scale * 5000))
 noise_mkt_open, noise_mkt_close = secondary_market_open, \
                                   secondary_market_close
 # value agents
@@ -161,7 +161,7 @@ num_value_agents = int(np.ceil(scale * 100))
 kappa = 1.67e-15
 lambda_a = 7e-11
 # momentum agents
-num_momentum_agents = int(np.ceil(scale * 25))
+num_momentum_agents = 0#int(np.ceil(scale * 25))
 # etf arbitrage agents
 num_etf_arbitrage_agents = int(np.ceil(scale * 100))
 etf_arbitrage_agents_gamma = 250
@@ -195,7 +195,7 @@ assert num_impacts >= 0
 assert 0 < impacts_greed <= 1
 
 impacts = {
-    "ETF": [{"starting_cash": starting_cents * 2,
+    "SYM1": [{"starting_cash": starting_cents * 2,
              "time": subimpact_time,
              "symbol": "ETF",
              "greed": impacts_greed}
