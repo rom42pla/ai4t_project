@@ -137,7 +137,7 @@ KERNEL
 '''
 scale = args.scale
 starting_cents = 100000 * 100  # cash is always in cents
-kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('47:00:00')
+kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('22:00:00')
 defaultComputationDelay = 0  # no delay for this config
 
 kernel = Kernel("Base Kernel", random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))

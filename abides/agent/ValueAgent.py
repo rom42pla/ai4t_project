@@ -39,8 +39,8 @@ class ValueAgent(TradingAgent):
         # units have passed.
         self.prev_wake_time = None
 
-        self.percent_aggr = 0.1                 #percent of time that the agent will aggress the spread
-        self.size = np.random.randint(20, 50)   #size that the agent will be placing
+        self.percent_aggr = 0.1  # percent of time that the agent will aggress the spread
+        self.size = np.random.randint(20, 50)  # size that the agent will be placing
         self.depth_spread = 2
 
     def kernelStarting(self, startTime):
@@ -59,7 +59,7 @@ class ValueAgent(TradingAgent):
         H = int(round(self.getHoldings(self.symbol), -2) / 100)
         # May request real fundamental value from oracle as part of final cleanup/stats.
 
-        #marked to fundamental
+        # marked to fundamental
         rT = self.oracle.observePrice(self.symbol, self.currentTime, sigma_n=0, random_state=self.random_state)
 
         # final (real) fundamental value times shares held.
@@ -69,7 +69,7 @@ class ValueAgent(TradingAgent):
 
         # Add ending cash value and subtract starting cash value.
         surplus += self.holdings['CASH'] - self.starting_cash
-        surplus = float( surplus )/self.starting_cash
+        surplus = float(surplus) / self.starting_cash
 
         self.logEvent('FINAL_VALUATION', surplus, True)
 
@@ -77,7 +77,7 @@ class ValueAgent(TradingAgent):
             "{} final report.  Holdings {}, end cash {}, start cash {}, final fundamental {}, surplus {}",
             self.name, H, self.holdings['CASH'], self.starting_cash, rT, surplus)
 
-        #print("Final surplus", self.name, surplus)
+        # print("Final surplus", self.name, surplus)
 
     def wakeup(self, currentTime):
         # Parent class handles discovery of exchange times and market_open wakeup call.
@@ -185,31 +185,32 @@ class ValueAgent(TradingAgent):
         return r_T
 
     def placeOrder(self):
-        #estimate final value of the fundamental price
-        #used for surplus calculation
+        # estimate final value of the fundamental price
+        # used for surplus calculation
         r_T = self.updateEstimates()
 
         bid, bid_vol, ask, ask_vol = self.getKnownBidAsk(self.symbol)
 
         if bid and ask:
-            mid = int((ask+bid)/2)
+            mid = int((ask + bid) / 2)
             spread = abs(ask - bid)
 
             if np.random.rand() < self.percent_aggr:
                 adjust_int = 0
             else:
-                adjust_int = np.random.randint( 0, self.depth_spread*spread )
-                #adjustment to the limit price, allowed to post inside the spread
-                #or deeper in the book as a passive order to maximize surplus
+                print(self.depth_spread, spread, self.kernel.currentTime)
+                adjust_int = np.random.randint(0, self.depth_spread * spread)
+                # adjustment to the limit price, allowed to post inside the spread
+                # or deeper in the book as a passive order to maximize surplus
 
             if r_T < mid:
-                #fundamental belief that price will go down, place a sell order
+                # fundamental belief that price will go down, place a sell order
                 buy = False
-                p = bid + adjust_int #submit a market order to sell, limit order inside the spread or deeper in the book
+                p = bid + adjust_int  # submit a market order to sell, limit order inside the spread or deeper in the book
             elif r_T >= mid:
-                #fundamental belief that price will go up, buy order
+                # fundamental belief that price will go up, buy order
                 buy = True
-                p = ask - adjust_int #submit a market order to buy, a limit order inside the spread or deeper in the book
+                p = ask - adjust_int  # submit a market order to buy, a limit order inside the spread or deeper in the book
         else:
             # initialize randomly
             buy = np.random.randint(0, 1 + 1)
