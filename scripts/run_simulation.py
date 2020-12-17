@@ -97,7 +97,9 @@ os.system(f"cd ../abides/util/plotting/;"
 os.system(f"cd ..;"
           f"fim data/{configuration}{seed}/plots/;")
 
+'''
 # gets .csv of the simulation
 os.system(f"cd ..; ls; python get_csv_simulations.py --simulation_name {configuration}{seed}")
 
 print(f"Ended simulation {configuration} with seed {seed} and {scale} scale for {hours} hours")
+'''
