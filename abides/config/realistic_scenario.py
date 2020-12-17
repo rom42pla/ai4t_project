@@ -96,7 +96,7 @@ primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00
 secondary_market_open = midnight + pd.to_timedelta('09:00:00')
 secondary_market_close = secondary_market_open + pd.Timedelta(hours, unit="hours")
 # symbols considered in the simulation
-symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
+symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
                     'megashock_lambda_a': 2.77778e-18,
                     'megashock_mean': 1e3,
@@ -108,14 +108,14 @@ symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'SYM3': {'r_bar': 80000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
+           'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
                     'fund_vol': 1e-4,
                     'megashock_lambda_a': 2.77778e-18,
                     'megashock_mean': 1e3,
                     'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
            'ETF': {
-               'portfolio': {'SYM1': 0.1, 'SYM2': 0.3, 'SYM3': 0.6},
+               'portfolio': {'SYM1': 0.6, 'SYM2': 0.3, 'SYM3': 0.1},
                'kappa': 3 * 1.67e-13, 'sigma_s': 0,
                'fund_vol': 1e-4,
                'megashock_lambda_a': 2.77778e-13,
@@ -128,7 +128,7 @@ symbols = {'SYM1': {'r_bar': 120000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
 etfs_names, stocks_names = [symbol for symbol, infos in symbols.items() if "portfolio" in infos.keys()], \
                            [symbol for symbol, infos in symbols.items() if "portfolio" not in infos.keys()]
 for etf_name in etfs_names:
-    assert np.sum(list(symbols[etf_name]["portfolio"].values())) == 1
+    assert np.isclose(np.sum(list(symbols[etf_name]["portfolio"].values())), 1)
     symbols[etf_name]["r_bar"] = sum([share * symbols[symbol_name]["r_bar"]
                                       for symbol_name, share in symbols[etf_name]["portfolio"].items()])
 symbols_full = symbols.copy()
@@ -137,7 +137,7 @@ KERNEL
 '''
 scale = args.scale
 starting_cents = 100000 * 100  # cash is always in cents
-kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('20:00:00')
+kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('47:00:00')
 defaultComputationDelay = 0  # no delay for this config
 
 kernel = Kernel("Base Kernel", random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))

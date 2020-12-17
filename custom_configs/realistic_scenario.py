@@ -128,7 +128,7 @@ symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': ut
 etfs_names, stocks_names = [symbol for symbol, infos in symbols.items() if "portfolio" in infos.keys()], \
                            [symbol for symbol, infos in symbols.items() if "portfolio" not in infos.keys()]
 for etf_name in etfs_names:
-    assert np.sum(list(symbols[etf_name]["portfolio"].values())) == 1
+    assert np.isclose(np.sum(list(symbols[etf_name]["portfolio"].values())), 1)
     symbols[etf_name]["r_bar"] = sum([share * symbols[symbol_name]["r_bar"]
                                       for symbol_name, share in symbols[etf_name]["portfolio"].items()])
 symbols_full = symbols.copy()
@@ -137,7 +137,7 @@ KERNEL
 '''
 scale = args.scale
 starting_cents = 100000 * 100  # cash is always in cents
-kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('20:00:00')
+kernelStartTime, kernelStopTime = midnight, midnight + pd.to_timedelta('47:00:00')
 defaultComputationDelay = 0  # no delay for this config
 
 kernel = Kernel("Base Kernel", random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)))
