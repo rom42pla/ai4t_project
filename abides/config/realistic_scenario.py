@@ -38,7 +38,7 @@ parser.add_argument('-sc', '--scale', type=float, default=0.5,
 parser.add_argument('--hours', type=float, default=8,
                     help='hours of simulation to reproduce,'
                          'starting always from 09:00AM up to 17:00PM')
-parser.add_argument('-o', '--log_orders', action='store_true', default=True,
+parser.add_argument('-o', '--log_orders', action='store_false', default=False,
                     help='Log every order-related action by every agent.')
 parser.add_argument('-s', '--seed', type=int, default=1,
                     help='numpy.random.seed() for simulation')
@@ -79,7 +79,7 @@ LimitOrder.silent_mode = not args.verbose
 # Config parameter that causes every order-related action to be logged by
 # every agent.  Activate only when really needed as there is a significant
 # time penalty to all that object serialization!
-log_orders = args.log_orders
+log_orders = False #args.log_orders
 
 print("Silent mode: {}".format(util.silent_mode))
 print("Shock variance: {:0.4f}".format(sigma_s))
@@ -154,8 +154,8 @@ num_exchange_agents = 1
 num_etf_primary_agents = 1
 # noise agents
 num_noise_agents = int(np.ceil(scale * 5000))
-noise_mkt_open, noise_mkt_close = secondary_market_open + pd.to_timedelta("00:15:00"), \
-                                  secondary_market_close - pd.to_timedelta("00:15:00")
+noise_mkt_open, noise_mkt_close = secondary_market_open, \
+                                  secondary_market_close
 # value agents
 num_value_agents = int(np.ceil(scale * 100))
 kappa = 1.67e-15
@@ -246,7 +246,7 @@ EXCHANGE AGENTS
 agents.append(
     ExchangeAgent(len(agents), "Exchange Agent {}".format(len(agents)), "ExchangeAgent",
                   secondary_market_open, secondary_market_close,
-                  list(symbols_full.keys()), log_orders=log_orders, pipeline_delay=0,
+                  list(symbols_full.keys()), log_orders=True, pipeline_delay=0,
                   computation_delay=0, stream_history=10, book_freq=book_freq,
                   random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
 agent_types.append("ExchangeAgent")
@@ -272,7 +272,7 @@ for symbol_name, infos in symbols_full.items():
                                         pov=pov_proportion_of_volume,
                                         direction=pov_direction,
                                         quantity=pov_quantity,
-                                        log_orders=True,  # needed for plots so conflicts with others
+                                        log_orders=log_orders,  # needed for plots so conflicts with others
                                         random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
                                                                                                   dtype='uint64'))))
         agent_types.append("ExecutionAgent")
