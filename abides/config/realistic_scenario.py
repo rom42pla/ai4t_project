@@ -79,7 +79,7 @@ LimitOrder.silent_mode = not args.verbose
 # Config parameter that causes every order-related action to be logged by
 # every agent.  Activate only when really needed as there is a significant
 # time penalty to all that object serialization!
-log_orders = False #args.log_orders
+log_orders = False  # args.log_orders
 
 print("Silent mode: {}".format(util.silent_mode))
 print("Shock variance: {:0.4f}".format(sigma_s))
@@ -153,7 +153,7 @@ num_exchange_agents = 1
 # ETF primary agents
 num_etf_primary_agents = 1
 # noise agents
-num_noise_agents = 0 #int(np.ceil(scale * 5000))
+num_noise_agents = 0  # int(np.ceil(scale * 5000))
 noise_mkt_open, noise_mkt_close = secondary_market_open, \
                                   secondary_market_close
 # value agents
@@ -161,7 +161,7 @@ num_value_agents = int(np.ceil(scale * 100))
 kappa = 1.67e-15
 lambda_a = 7e-11
 # momentum agents
-num_momentum_agents = 0#int(np.ceil(scale * 25))
+num_momentum_agents = 0  # int(np.ceil(scale * 25))
 # etf arbitrage agents
 num_etf_arbitrage_agents = int(np.ceil(scale * 100))
 etf_arbitrage_agents_gamma = 250
@@ -196,15 +196,15 @@ assert 0 < impacts_greed <= 1
 
 impacts = {
     "SYM1": [{"starting_cash": starting_cents * 2,
-             "time": subimpact_time,
-             "symbol": "ETF",
-             "greed": impacts_greed}
-            for impact_time in dates_linspace(start=secondary_market_open + pd.Timedelta(0, unit="minutes"),
-                                              stop=secondary_market_close,
-                                              num=num_impacts + 2)[1:-1]
-            for subimpact_time in dates_linspace(start=impact_time - pd.Timedelta(30, unit="seconds"),
-                                                 stop=impact_time + pd.Timedelta(30, unit="seconds"),
-                                                 num=6)]
+              "time": subimpact_time,
+              "symbol": "ETF",
+              "greed": impacts_greed}
+             for impact_time in dates_linspace(start=secondary_market_open + pd.Timedelta(0, unit="minutes"),
+                                               stop=secondary_market_close,
+                                               num=num_impacts + 2)[1:-1]
+             for subimpact_time in dates_linspace(start=impact_time - pd.Timedelta(30, unit="seconds"),
+                                                  stop=impact_time + pd.Timedelta(30, unit="seconds"),
+                                                  num=6)]
 }
 assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 
@@ -377,7 +377,7 @@ for symbol_name, infos in symbols_full.items():
                             "Etf Arb Agent {}".format(len(agents)),
                             "EtfArbAgent",
                             portfolio=portfolio, gamma=etf_arbitrage_agents_gamma,
-                            starting_cash=starting_cents, lambda_a=1e-9, log_orders=log_orders,
+                            starting_cash=starting_cents, lambda_a=lambda_a, log_orders=log_orders,
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("EtfArbAgent {}".format(len(agents)))
 
@@ -390,7 +390,7 @@ for symbol_name, infos in symbols_full.items():
                                               "Etf MM Agent {} {}".format(len(agents), strat_name),
                                               "EtfMarketMakerAgent {}".format(strat_name),
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=etf_market_maker_agents_gamma, lambda_a=1e-9,
+                                              gamma=etf_market_maker_agents_gamma, lambda_a=lambda_a,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
