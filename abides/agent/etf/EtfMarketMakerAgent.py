@@ -128,20 +128,20 @@ class EtfMarketMakerAgent(EtfArbAgent):
         elif (index_mid - etf_mid) > self.gamma:
             # print('buy ETF')
             for i, (s, share) in enumerate(self.portfolio.items()):
-                self.placeLimitOrder(s, share * 100, False, index_p[s]['bid'])  # vende sottostante e compra etf
-            self.placeLimitOrder('ETF', 100, True, etf_p['ask'])
+                self.placeLimitOrder(s, round(share * 100), False, index_p[s]['bid'])  # vende sottostante e compra etf
+            self.placeLimitOrder('ETF', sum([round(share * 100) for _, share in self.portfolio.items()]),
+                                 True, etf_p['ask'])
         elif (etf_mid - index_mid) > self.gamma:
             # print('sell ETF')
             for i, (s, share) in enumerate(self.portfolio.items()):  # {sym1, sym2}
-                self.placeLimitOrder(s, share * 100, True, index_p[s]['ask'])  # compra sottostante e vende etf
-            self.placeLimitOrder('ETF', 100, False, etf_p['bid'])
+                self.placeLimitOrder(s, round(share * 100), True, index_p[s]['ask'])  # compra sottostante e vende etf
+            self.placeLimitOrder('ETF', sum([round(share * 100) for _, share in self.portfolio.items()]),
+                                 False, etf_p['bid'])
         else:
             pass
             # print('no move because abs(index - ETF mid) < gamma')
 
     def decideBasket(self):
-        print("\n\nHere the print we are looking for: ------------------------------------------")
-        print(self.portfolio)
         index_est = 0
 
         for i, (s, share) in enumerate(self.portfolio.items()):
