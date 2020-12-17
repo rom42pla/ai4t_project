@@ -148,7 +148,7 @@ AGENTS
 '''
 # structures to hold agents' instances
 agents, agent_types = [], []
-trading_frequency = 7e-11
+arrival_lambda = 7e-11
 # exchange agents
 num_exchange_agents = 1
 # ETF primary agents
@@ -311,7 +311,7 @@ for symbol_name, infos in symbols_full.items():
                                  sigma_n=sigma_n,
                                  r_bar=r_bar,
                                  kappa=kappa,
-                                 lambda_a=trading_frequency,
+                                 lambda_a=arrival_lambda,
                                  log_orders=log_orders,
                                  random_state=np.random.RandomState(
                                      seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))))
@@ -377,7 +377,7 @@ for symbol_name, infos in symbols_full.items():
                             "Etf Arb Agent {}".format(len(agents)),
                             "EtfArbAgent",
                             portfolio=portfolio, gamma=etf_arbitrage_agents_gamma,
-                            starting_cash=starting_cents, lambda_a=trading_frequency, log_orders=log_orders,
+                            starting_cash=starting_cents, lambda_a=arrival_lambda, log_orders=log_orders,
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("EtfArbAgent {}".format(len(agents)))
 
@@ -390,7 +390,7 @@ for symbol_name, infos in symbols_full.items():
                                               "Etf MM Agent {} {}".format(len(agents), strat_name),
                                               "EtfMarketMakerAgent {}".format(strat_name),
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=etf_market_maker_agents_gamma, lambda_a=trading_frequency,
+                                              gamma=etf_market_maker_agents_gamma, lambda_a=arrival_lambda,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
