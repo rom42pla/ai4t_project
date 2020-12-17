@@ -11,7 +11,7 @@ parser.add_argument('--configuration', type=str, default="realistic_scenario",
                          'inside custom_configs/')
 parser.add_argument('--scale', type=float, default=1,
                     help='scale of the simulation')
-parser.add_argument('--hours', type=float, default=8,
+parser.add_argument('--hours', type=float, default=1,
                     help='hours of simulation to reproduce, '
                          'starting always from 09:00AM up to 17:00PM')
 parser.add_argument('--num_simulations', type=int, default=3,

@@ -4,6 +4,8 @@ from agent.NoiseAgent import NoiseAgent
 from agent.ValueAgent import ValueAgent
 from agent.etf.EtfPrimaryAgent import EtfPrimaryAgent
 from agent.examples.MomentumAgent import MomentumAgent
+from agent.HeuristicBeliefLearningAgent import HeuristicBeliefLearningAgent
+from agent.ZeroIntelligenceAgent import ZeroIntelligenceAgent
 from agent.examples.ImpactAgent import ImpactAgent
 from agent.etf.EtfArbAgent import EtfArbAgent
 from agent.etf.EtfMarketMakerAgent import EtfMarketMakerAgent
@@ -35,12 +37,12 @@ parser.add_argument('-c', '--config', required=True,
                     help='Name of config file to execute')
 parser.add_argument('-sc', '--scale', type=float, default=0.5,
                     help='Scale of the simulation (1 for all number of agents)')
-parser.add_argument('--hours', type=float, default=8,
+parser.add_argument('--hours', type=float, default=1,
                     help='hours of simulation to reproduce,'
                          'starting always from 09:00AM up to 17:00PM')
 parser.add_argument('-o', '--log_orders', action='store_false', default=False,
                     help='Log every order-related action by every agent.')
-parser.add_argument('-s', '--seed', type=int, default=1,
+parser.add_argument('-s', '--seed', type=int, default=123456,
                     help='numpy.random.seed() for simulation')
 # kernel and oracle settings
 parser.add_argument('-r', '--shock_variance', type=float, default=500000,
@@ -79,7 +81,7 @@ LimitOrder.silent_mode = not args.verbose
 # Config parameter that causes every order-related action to be logged by
 # every agent.  Activate only when really needed as there is a significant
 # time penalty to all that object serialization!
-log_orders = False  # args.log_orders
+log_orders = True  # args.log_orders
 
 print("Silent mode: {}".format(util.silent_mode))
 print("Shock variance: {:0.4f}".format(sigma_s))
@@ -148,6 +150,7 @@ AGENTS
 '''
 # structures to hold agents' instances
 agents, agent_types = [], []
+arrival_lambda = 7e-11
 # exchange agents
 num_exchange_agents = 1
 # ETF primary agents
@@ -156,12 +159,18 @@ num_etf_primary_agents = 1
 num_noise_agents = 0  # int(np.ceil(scale * 5000))
 noise_mkt_open, noise_mkt_close = secondary_market_open, \
                                   secondary_market_close
+# zero intelligence
+#zero_intelligence_configs = [(15, 0, 250, 1), (15, 0, 500, 1), (14, 0, 1000, 0.8), (14, 0, 1000, 1),
+ #                            (14, 0, 2000, 0.8), (14, 250, 500, 0.8), (14, 250, 500, 1)]
+zero_intelligence_configs = [(0, 0, 0, 0)]
+num_zero_intelligence_agents = np.sum([t[0] for t in zero_intelligence_configs])
+noise_value = 1000000
 # value agents
 num_value_agents = int(np.ceil(scale * 100))
 kappa = 1.67e-15
-lambda_a = 7e-11
 # momentum agents
-num_momentum_agents = 0  # int(np.ceil(scale * 25))
+num_momentum_agents = int(np.ceil(scale * 25))
+num_heuristic_belief_learning_agents = int(np.ceil(scale * 5))
 # etf arbitrage agents
 num_etf_arbitrage_agents = int(np.ceil(scale * 100))
 etf_arbitrage_agents_gamma = 250
@@ -222,13 +231,14 @@ print(pd.DataFrame(
 ).sort_values(by=['date']).to_string(index=False))
 print(pd.DataFrame(
     data={
-        "agent": ["Exchange",
+        "agent": ["Exchange", "Impact",
                   "POV Market Maker", "POV Execution",
-                  "Noise", "Value", "Momentum",
+                  "Noise", "Zero Intelligence", "Value", "Momentum", "Heuristic Belief",
                   "ETF Primary", "ETF Market Maker", "ETF Arbitrage"],
-        "amount": [num_exchange_agents,
+        "amount": [num_exchange_agents, num_impacts,
                    num_pov_market_maker_agents, num_pov_execution_agents,
-                   num_noise_agents, num_value_agents, num_momentum_agents,
+                   num_noise_agents, num_zero_intelligence_agents, num_value_agents, num_momentum_agents,
+                   num_heuristic_belief_learning_agents,
                    num_etf_primary_agents, num_etf_market_maker_agents, num_etf_arbitrage_agents]
     }
 ).to_string(index=False))
@@ -272,7 +282,7 @@ for symbol_name, infos in symbols_full.items():
                                         pov=pov_proportion_of_volume,
                                         direction=pov_direction,
                                         quantity=pov_quantity,
-                                        log_orders=log_orders,  # needed for plots so conflicts with others
+                                        log_orders=True,  # needed for plots so conflicts with others
                                         random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
                                                                                                   dtype='uint64'))))
         agent_types.append("ExecutionAgent")
@@ -303,15 +313,29 @@ for symbol_name, infos in symbols_full.items():
         agent_types.append('NoiseAgent')
 
     '''
+    ZERO INTELLIGENCE AGENTS
+    '''
+    for number, R_min, R_max, eta in zero_intelligence_configs:
+        for _ in range(number):
+            agents.append(ZeroIntelligenceAgent(id=len(agents), name="ZI Agent {}".format(len(agents)),
+                                                type="ZeroIntelligenceAgent",
+                                                random_state=np.random.RandomState(
+                                                    seed=np.random.randint(low=0, high=2 ** 32)), log_orders=log_orders,
+                                                symbol=symbol_name, starting_cash=starting_cents, sigma_n=noise_value,
+                                                r_bar=r_bar, q_max=10, sigma_pv=5000000,
+                                                R_min=R_min, R_max=R_max, eta=eta, lambda_a=arrival_lambda))
+            agent_types.append('NoiseAgent')
+
+    '''
     VALUE AGENTS
     '''
     for i in range(num_value_agents):
         agents.append(ValueAgent(id=len(agents), name="Value Agent {}".format(len(agents)), type="ValueAgent",
                                  symbol=symbol_name, starting_cash=starting_cents,
-                                 sigma_n=sigma_n,
+                                 sigma_n=noise_value,
                                  r_bar=r_bar,
                                  kappa=kappa,
-                                 lambda_a=lambda_a,
+                                 lambda_a=arrival_lambda,
                                  log_orders=log_orders,
                                  random_state=np.random.RandomState(
                                      seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))))
@@ -328,6 +352,20 @@ for symbol_name, infos in symbols_full.items():
                           random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32)),
                           log_orders=log_orders))
         agent_types.append("MomentumAgent {}".format(len(agents)))
+
+    '''
+    HEURISTIC BELIEF LEARNING AGENTS
+    '''
+    for i in range(num_heuristic_belief_learning_agents):
+        agents.append(
+            HeuristicBeliefLearningAgent(len(agents), "HBL Agent {}".format(len(agents)), type="HBLAgent",
+                                         symbol=symbol_name, starting_cash=starting_cents, sigma_n=noise_value,
+                                         r_bar=r_bar, q_max=10, sigma_pv=5000000, lambda_a=arrival_lambda,
+                                         R_min=250, R_max=500, eta=1, L=5,
+                                         random_state=np.random.RandomState(
+                                             seed=np.random.randint(low=0, high=2 ** 32)),
+                                         log_orders=log_orders))
+        agent_types.append("HBLAgent {}".format(len(agents)))
 
     '''
     POV MARKET MAKER AGENTS
@@ -377,7 +415,7 @@ for symbol_name, infos in symbols_full.items():
                             "Etf Arb Agent {}".format(len(agents)),
                             "EtfArbAgent",
                             portfolio=portfolio, gamma=etf_arbitrage_agents_gamma,
-                            starting_cash=starting_cents, lambda_a=lambda_a, log_orders=log_orders,
+                            starting_cash=starting_cents, lambda_a=arrival_lambda, log_orders=log_orders,
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("EtfArbAgent {}".format(len(agents)))
 
@@ -390,7 +428,7 @@ for symbol_name, infos in symbols_full.items():
                                               "Etf MM Agent {} {}".format(len(agents), strat_name),
                                               "EtfMarketMakerAgent {}".format(strat_name),
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=etf_market_maker_agents_gamma, lambda_a=lambda_a,
+                                              gamma=etf_market_maker_agents_gamma, lambda_a=arrival_lambda,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
