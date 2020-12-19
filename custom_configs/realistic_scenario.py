@@ -54,7 +54,7 @@ parser.add_argument('-n', '--obs_noise', type=float, default=1000000,
 parser.add_argument('--num_impacts', type=int, default=1,
                     help='number of impacts on the ETF, '
                          'equally distributed during the simulation')
-parser.add_argument('--impacts_greed', type=float, default=0.5,
+parser.add_argument('--impacts_greed', type=float, default=1,
                     help='percentage of money used by impact agents')
 
 args, remaining_args = parser.parse_known_args()
@@ -106,12 +106,12 @@ symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol'
                     'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
                     'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
                     'type': util.SymbolType.Stock},
-           # 'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
-           #        'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
-           #       'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
-           #      'type': util.SymbolType.Stock},
+           'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+                    'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+                    'type': util.SymbolType.Stock},
            'ETF': {
-               'portfolio': {'SYM1': 0.6, 'SYM2': 0.4},
+               'portfolio': {'SYM1': 0.6, 'SYM2': 0.3, 'SYM3': 0.1},
                'kappa': 3 * 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
                'megashock_lambda_a': 2.77778e-13, 'megashock_mean': 0, 'megashock_var': 5e4,
                'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
@@ -151,18 +151,17 @@ num_noise_agents = int(np.ceil(scale * 700 * hours))
 noise_mkt_open, noise_mkt_close = secondary_market_open, \
                                   secondary_market_close
 # zero intelligence
-num_zero_intelligence_agents = int(np.ceil(scale * 100))
+num_zero_intelligence_agents = 0  # int(np.ceil(scale * 100))
 zero_intelligence_agents_per_class = int(np.ceil(num_zero_intelligence_agents / 7))
-# zero_intelligence_configs = [
-#     (zero_intelligence_agents_per_class, 0, 250, 1),
-#     (zero_intelligence_agents_per_class, 0, 500, 1),
-#     (zero_intelligence_agents_per_class, 0, 1000, 0.8),
-#     (zero_intelligence_agents_per_class, 0, 1000, 1),
-#     (zero_intelligence_agents_per_class, 0, 2000, 0.8),
-#     (zero_intelligence_agents_per_class, 250, 500, 0.8),
-#     (zero_intelligence_agents_per_class, 250, 500, 1)
-# ]
-zero_intelligence_configs = [(0, 0, 0, 0)]
+zero_intelligence_configs = [
+    (zero_intelligence_agents_per_class, 0, 250, 1),
+    (zero_intelligence_agents_per_class, 0, 500, 1),
+    (zero_intelligence_agents_per_class, 0, 1000, 0.8),
+    (zero_intelligence_agents_per_class, 0, 1000, 1),
+    (zero_intelligence_agents_per_class, 0, 2000, 0.8),
+    (zero_intelligence_agents_per_class, 250, 500, 0.8),
+    (zero_intelligence_agents_per_class, 250, 500, 1)
+]
 
 # value agents
 num_value_agents = int(np.ceil(scale * 100))
@@ -171,9 +170,9 @@ kappa = 1.67e-15
 num_momentum_agents = 0  # int(np.ceil(scale * 25))
 num_heuristic_belief_learning_agents = 0  # int(np.ceil(scale * 40))
 # ETF arbitrage agents
-num_etf_arbitrage_agents = 0  # int(np.ceil(scale * 50))
+num_etf_arbitrage_agents = int(np.ceil(scale * 50))
 # ETF market maker agents
-num_etf_market_maker_agents = 0  # int(np.ceil(scale * 50))
+num_etf_market_maker_agents = int(np.ceil(scale * 50))
 # market maker agents
 num_pov_market_maker_agents = int(np.ceil(scale * 1))
 # pov execution agents
@@ -216,6 +215,17 @@ assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 '''
 P R I N T S
 '''
+symbols_names = list(symbols_full.keys())
+print(pd.DataFrame(
+    dtype=int,
+    index=symbols_names,
+    data={
+        "type": ["ETF" if symbol_name in etfs_names else "stock"
+                 for symbol_name in symbols_names],
+        "portfolio": [symbols_full[symbol_name]["portfolio"] if symbol_name in etfs_names else None
+                      for symbol_name in symbols_names]
+    }
+).to_string())
 print(f"Scale of simulation: {scale}")
 print(pd.DataFrame(
     data={
@@ -226,18 +236,45 @@ print(pd.DataFrame(
     }
 ).sort_values(by=['date']).to_string(index=False))
 print(pd.DataFrame(
+    dtype=int,
+    index=["Exchange",
+           "Impact",
+           "POV Market Maker",
+           "POV Execution",
+           "Noise",
+           "Zero Intelligence",
+           "Value",
+           "Momentum",
+           "Heuristic Belief",
+           "ETF Primary", "ETF Market Maker", "ETF Arbitrage"],
     data={
-        "agent": ["Exchange", "Impact",
-                  "POV Market Maker", "POV Execution",
-                  "Noise", "Zero Intelligence", "Value", "Momentum", "Heuristic Belief",
-                  "ETF Primary", "ETF Market Maker", "ETF Arbitrage"],
-        "amount": [num_exchange_agents, num_impacts,
-                   num_pov_market_maker_agents, num_pov_execution_agents,
-                   num_noise_agents, num_zero_intelligence_agents, num_value_agents, num_momentum_agents,
-                   num_heuristic_belief_learning_agents,
-                   num_etf_primary_agents, num_etf_market_maker_agents, num_etf_arbitrage_agents]
+        "amount per symbol": [None,
+                              None,
+                              num_pov_market_maker_agents,
+                              num_pov_execution_agents,
+                              num_noise_agents,
+                              num_zero_intelligence_agents,
+                              num_value_agents,
+                              num_momentum_agents,
+                              num_heuristic_belief_learning_agents,
+                              num_etf_primary_agents,
+                              num_etf_market_maker_agents,
+                              num_etf_arbitrage_agents],
+        "total amount": [num_exchange_agents,
+                         num_impacts,
+                         num_pov_market_maker_agents * len(symbols_full),
+                         num_pov_execution_agents * len(symbols_full),
+                         num_noise_agents * len(symbols_full),
+                         num_zero_intelligence_agents * len(symbols_full),
+                         num_value_agents * len(symbols_full),
+                         num_momentum_agents * len(symbols_full),
+                         num_heuristic_belief_learning_agents * len(symbols_full),
+                         num_etf_primary_agents * len(etfs_names),
+                         num_etf_market_maker_agents * len(etfs_names),
+                         num_etf_arbitrage_agents * len(etfs_names)
+                         ]
     }
-).to_string(index=False))
+).to_string())
 
 '''
 if len(impacts.keys()) > 0:
@@ -304,7 +341,7 @@ for symbol_name, infos in symbols_full.items():
     '''
     NOISE AGENTS
     '''
-    for i in range(num_noise_agents if not is_ETF else int(num_noise_agents * 1.5)):
+    for i in range(num_noise_agents if not is_ETF else int(num_noise_agents * 1)):
         agents.append(NoiseAgent(id=len(agents), name="NoiseAgent {}".format(len(agents)), type="NoiseAgent",
                                  symbol=symbol_name, starting_cash=starting_cents,
                                  wakeup_time=util.get_wake_time(noise_mkt_open, noise_mkt_close),

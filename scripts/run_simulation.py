@@ -23,7 +23,7 @@ parser.add_argument('--hours', type=float, default=1,
 parser.add_argument('--num_impacts', type=int, default=1,
                     help='number of impacts on the ETF, '
                          'equally distributed during the simulation')
-parser.add_argument('--impacts_greed', type=float, default=0.5,
+parser.add_argument('--impacts_greed', type=float, default=1,
                     help='percentage of money used by impact agents')
 args = parser.parse_args()
 
