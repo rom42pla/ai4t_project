@@ -35,7 +35,7 @@ parser.add_argument('-l', '--log_dir', default="realistic_scenario",
                     help='Log directory name (default: unix timestamp at program start)')
 parser.add_argument('-c', '--config', required=True,
                     help='Name of config file to execute')
-parser.add_argument('-sc', '--scale', type=float, default=0.5,
+parser.add_argument('-sc', '--scale', type=float, default=0.2,
                     help='Scale of the simulation (1 for all number of agents)')
 parser.add_argument('--hours', type=float, default=1,
                     help='hours of simulation to reproduce,'
@@ -69,9 +69,9 @@ sigma_n = args.obs_noise
 # Shock variance of mean reversion process.
 sigma_s = args.shock_variance
 
-if seed is not None:
+if seed is None:
     seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
-np.random.seed(seed)
+np.random.seed(seed * 1e3)
 
 # Config parameter that causes util.util.print to suppress most output.
 # Also suppresses formatting of limit orders (which is time consuming).
@@ -92,37 +92,28 @@ MARKET
 '''
 # primary and secondary markets' hours
 midnight, hours = pd.to_datetime('2020-06-15'), args.hours
-assert 1 <= hours <= 8
+assert hours <= 8
 primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00'), \
                                             midnight + pd.to_timedelta('17:30:00')
 secondary_market_open = midnight + pd.to_timedelta('09:00:00')
 secondary_market_close = secondary_market_open + pd.Timedelta(hours, unit="hours")
 # symbols considered in the simulation
-symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
-                    'fund_vol': 1e-4,
-                    'megashock_lambda_a': 2.77778e-18,
-                    'megashock_mean': 1e3,
-                    'megashock_var': 5e4,
-                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'SYM2': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
-                    'fund_vol': 1e-4,
-                    'megashock_lambda_a': 2.77778e-18,
-                    'megashock_mean': 1e3,
-                    'megashock_var': 5e4,
-                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
-                    'fund_vol': 1e-4,
-                    'megashock_lambda_a': 2.77778e-18,
-                    'megashock_mean': 1e3,
-                    'megashock_var': 5e4,
-                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
+symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+                    'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+                    'type': util.SymbolType.Stock},
+           'SYM2': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+                    'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+                    'type': util.SymbolType.Stock},
+           # 'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+           #        'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+           #       'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+           #      'type': util.SymbolType.Stock},
            'ETF': {
-               'portfolio': {'SYM1': 0.6, 'SYM2': 0.3, 'SYM3': 0.1},
-               'kappa': 3 * 1.67e-13, 'sigma_s': 0,
-               'fund_vol': 1e-4,
-               'megashock_lambda_a': 2.77778e-13,
-               'megashock_mean': 0,
-               'megashock_var': 5e4,
+               'portfolio': {'SYM1': 0.6, 'SYM2': 0.4},
+               'kappa': 3 * 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+               'megashock_lambda_a': 2.77778e-13, 'megashock_mean': 0, 'megashock_var': 5e4,
                'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
                'type': util.SymbolType.ETF}
            }
@@ -156,32 +147,37 @@ num_exchange_agents = 1
 # ETF primary agents
 num_etf_primary_agents = 1
 # noise agents
-num_noise_agents = 0  # int(np.ceil(scale * 5000))
+num_noise_agents = int(np.ceil(scale * 700 * hours))
 noise_mkt_open, noise_mkt_close = secondary_market_open, \
                                   secondary_market_close
 # zero intelligence
-#zero_intelligence_configs = [(15, 0, 250, 1), (15, 0, 500, 1), (14, 0, 1000, 0.8), (14, 0, 1000, 1),
- #                            (14, 0, 2000, 0.8), (14, 250, 500, 0.8), (14, 250, 500, 1)]
+num_zero_intelligence_agents = int(np.ceil(scale * 100))
+zero_intelligence_agents_per_class = int(np.ceil(num_zero_intelligence_agents / 7))
+# zero_intelligence_configs = [
+#     (zero_intelligence_agents_per_class, 0, 250, 1),
+#     (zero_intelligence_agents_per_class, 0, 500, 1),
+#     (zero_intelligence_agents_per_class, 0, 1000, 0.8),
+#     (zero_intelligence_agents_per_class, 0, 1000, 1),
+#     (zero_intelligence_agents_per_class, 0, 2000, 0.8),
+#     (zero_intelligence_agents_per_class, 250, 500, 0.8),
+#     (zero_intelligence_agents_per_class, 250, 500, 1)
+# ]
 zero_intelligence_configs = [(0, 0, 0, 0)]
-num_zero_intelligence_agents = np.sum([t[0] for t in zero_intelligence_configs])
-noise_value = 1000000
+
 # value agents
 num_value_agents = int(np.ceil(scale * 100))
 kappa = 1.67e-15
 # momentum agents
-num_momentum_agents = int(np.ceil(scale * 25))
-num_heuristic_belief_learning_agents = int(np.ceil(scale * 5))
-# etf arbitrage agents
-num_etf_arbitrage_agents = int(np.ceil(scale * 100))
-etf_arbitrage_agents_gamma = 250
+num_momentum_agents = 0  # int(np.ceil(scale * 25))
+num_heuristic_belief_learning_agents = 0  # int(np.ceil(scale * 40))
+# ETF arbitrage agents
+num_etf_arbitrage_agents = 0#int(np.ceil(scale * 50))
 # ETF market maker agents
-num_etf_market_maker_agents = int(np.ceil(scale * 10))
-etf_market_maker_agents_gamma = 250
+num_etf_market_maker_agents = 0#int(np.ceil(scale * 50))
 # market maker agents
 num_pov_market_maker_agents = int(np.ceil(scale * 1))
-market_maker_agents_gamma = 100
 # pov execution agents
-num_pov_execution_agents = int(np.ceil(scale * 0))
+num_pov_execution_agents = 0  # int(np.ceil(scale * 1))
 pov_agent_start_time, pov_agent_end_time = secondary_market_open + pd.to_timedelta('00:30:00'), \
                                            secondary_market_close - pd.to_timedelta('00:30:00')
 pov_proportion_of_volume, pov_quantity, pov_frequency, pov_direction = 0.1, 12e5, "1min", "BUY"
@@ -243,12 +239,15 @@ print(pd.DataFrame(
     }
 ).to_string(index=False))
 
-df = pd.DataFrame()
-for etf in impacts:
-    df_etf = pd.DataFrame.from_dict(impacts[etf])
-    df_etf["symbol"] = etf
-    df = pd.concat([df, df_etf])
-print(df.sort_values(by=["symbol", "time"]).to_string(index=False))
+'''
+if len(impacts.keys()) > 0:
+    df = pd.DataFrame()
+    for etf in impacts:
+        df_etf = pd.DataFrame.from_dict(impacts[etf])
+        df_etf["symbol"] = etf
+        df = pd.concat([df, df_etf])
+    print(df.sort_values(by=["symbol", "time"]).to_string(index=False))
+'''
 
 '''
 EXCHANGE AGENTS
@@ -267,6 +266,8 @@ for symbol_name, infos in symbols_full.items():
     # computes some parameters for each symbol
     r_bar = infos["r_bar"] if not is_ETF \
         else np.sum([symbols_full[symbol]["r_bar"] * share for symbol, share in infos["portfolio"].items()])
+    # observer noise
+    noise_value = r_bar / 10
 
     '''
     POV EXECUTION AGENTS
@@ -285,7 +286,7 @@ for symbol_name, infos in symbols_full.items():
                                         log_orders=True,  # needed for plots so conflicts with others
                                         random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32,
                                                                                                   dtype='uint64'))))
-        agent_types.append("ExecutionAgent")
+        agent_types.append(f"ExecutionAgent {len(agents)}")
 
     '''
     IMPACT AGENTS
@@ -298,7 +299,7 @@ for symbol_name, infos in symbols_full.items():
                             symbol=symbol_name, starting_cash=impact_dict["starting_cash"], greed=impact_dict["greed"],
                             impact=True, impact_time=midnight + pd.to_timedelta(impact_dict["time"]),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
-            agent_types.append("ImpactAgent {}".format(len(agents)))
+            agent_types.append(f"ImpactAgent {len(agents)}")
 
     '''
     NOISE AGENTS
@@ -310,7 +311,7 @@ for symbol_name, infos in symbols_full.items():
                                  log_orders=log_orders,
                                  random_state=np.random.RandomState(
                                      seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))))
-        agent_types.append('NoiseAgent')
+        agent_types.append(f'NoiseAgent {len(agents)}')
 
     '''
     ZERO INTELLIGENCE AGENTS
@@ -324,7 +325,7 @@ for symbol_name, infos in symbols_full.items():
                                                 symbol=symbol_name, starting_cash=starting_cents, sigma_n=noise_value,
                                                 r_bar=r_bar, q_max=10, sigma_pv=5000000,
                                                 R_min=R_min, R_max=R_max, eta=eta, lambda_a=arrival_lambda))
-            agent_types.append('NoiseAgent')
+            agent_types.append(f'ZeroIntelligenceAgent {len(agents)}')
 
     '''
     VALUE AGENTS
@@ -339,7 +340,7 @@ for symbol_name, infos in symbols_full.items():
                                  log_orders=log_orders,
                                  random_state=np.random.RandomState(
                                      seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))))
-        agent_types.append('ValueAgent')
+        agent_types.append(f'ValueAgent {len(agents)}')
 
     '''
     MOMENTUM AGENTS
@@ -414,25 +415,24 @@ for symbol_name, infos in symbols_full.items():
                 EtfArbAgent(len(agents),
                             "Etf Arb Agent {}".format(len(agents)),
                             "EtfArbAgent",
-                            portfolio=portfolio, gamma=etf_arbitrage_agents_gamma,
+                            portfolio=portfolio, gamma=250,
                             starting_cash=starting_cents, lambda_a=arrival_lambda, log_orders=log_orders,
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
-            agent_types.append("EtfArbAgent {}".format(len(agents)))
+            agent_types.append("EtfArbAgent")
 
         '''
         ETF MARKET MAKER AGENTS
         '''
         for i in range(num_etf_market_maker_agents):
-            strat_name = "Type {} [gamma = {}]".format(len(agents), etf_market_maker_agents_gamma)
             agents.append(EtfMarketMakerAgent(len(agents),
-                                              "Etf MM Agent {} {}".format(len(agents), strat_name),
-                                              "EtfMarketMakerAgent {}".format(strat_name),
+                                              "Etf MM Agent {}".format(len(agents)),
+                                              "EtfMarketMakerAgent",
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=etf_market_maker_agents_gamma, lambda_a=arrival_lambda,
+                                              gamma=250, lambda_a=(arrival_lambda) * 1e-2,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
-            agent_types.append("EtfMarketMakerAgent {}".format(i))
+            agent_types.append("EtfMarketMakerAgent")
 
 # This configures all agents to a starting latency as described above.
 # latency = np.random.uniform(low = 21000, high = 13000000, size=(len(agent_types),len(agent_types)))
