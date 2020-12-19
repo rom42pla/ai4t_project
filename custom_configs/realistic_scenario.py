@@ -98,31 +98,22 @@ primary_market_open, primary_market_close = midnight + pd.to_timedelta('17:00:00
 secondary_market_open = midnight + pd.to_timedelta('09:00:00')
 secondary_market_close = secondary_market_open + pd.Timedelta(hours, unit="hours")
 # symbols considered in the simulation
-symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
-                    'fund_vol': 1e-4,
-                    'megashock_lambda_a': 2.77778e-18,
-                    'megashock_mean': 1e3,
-                    'megashock_var': 5e4,
-                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'SYM2': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
-                    'fund_vol': 1e-4,
-                    'megashock_lambda_a': 2.77778e-18,
-                    'megashock_mean': 1e3,
-                    'megashock_var': 5e4,
-                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
-           'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'type': util.SymbolType.Stock,
-                    'fund_vol': 1e-4,
-                    'megashock_lambda_a': 2.77778e-18,
-                    'megashock_mean': 1e3,
-                    'megashock_var': 5e4,
-                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))},
+symbols = {'SYM1': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+                    'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+                    'type': util.SymbolType.Stock, },
+           'SYM2': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+                    'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+                    'type': util.SymbolType.Stock, },
+           'SYM3': {'r_bar': 100000, 'kappa': 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+                    'megashock_lambda_a': 2.77778e-18, 'megashock_mean': 1e3, 'megashock_var': 5e4,
+                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+                    'type': util.SymbolType.Stock, },
            'ETF': {
                'portfolio': {'SYM1': 0.6, 'SYM2': 0.3, 'SYM3': 0.1},
-               'kappa': 3 * 1.67e-13, 'sigma_s': 0,
-               'fund_vol': 1e-4,
-               'megashock_lambda_a': 2.77778e-13,
-               'megashock_mean': 0,
-               'megashock_var': 5e4,
+               'kappa': 3 * 1.67e-13, 'sigma_s': 0, 'fund_vol': 1e-4,
+               'megashock_lambda_a': 2.77778e-13, 'megashock_mean': 0, 'megashock_var': 5e4,
                'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
                'type': util.SymbolType.ETF}
            }
@@ -160,8 +151,8 @@ num_noise_agents = 0  # int(np.ceil(scale * 5000))
 noise_mkt_open, noise_mkt_close = secondary_market_open, \
                                   secondary_market_close
 # zero intelligence
-#zero_intelligence_configs = [(15, 0, 250, 1), (15, 0, 500, 1), (14, 0, 1000, 0.8), (14, 0, 1000, 1),
- #                            (14, 0, 2000, 0.8), (14, 250, 500, 0.8), (14, 250, 500, 1)]
+# zero_intelligence_configs = [(15, 0, 250, 1), (15, 0, 500, 1), (14, 0, 1000, 0.8), (14, 0, 1000, 1),
+#                            (14, 0, 2000, 0.8), (14, 250, 500, 0.8), (14, 250, 500, 1)]
 zero_intelligence_configs = [(0, 0, 0, 0)]
 num_zero_intelligence_agents = np.sum([t[0] for t in zero_intelligence_configs])
 noise_value = 1000000
