@@ -88,17 +88,15 @@ os.system(f"cd ../abides/util/plotting/;"
           f"python -u liquidity_telemetry.py ../../log/{configuration}{seed}/ExchangeAgent0.bz2 ../../log/{configuration}{seed}/ORDERBOOK_ETF_FULL.bz2 -o ../../../data/{configuration}{seed}/plots/ETF_plot.png -c ../../../data/{configuration}{seed}/plots/plots_config.json;"
           f"python -u liquidity_telemetry.py ../../log/{configuration}{seed}/ExchangeAgent0.bz2 ../../log/{configuration}{seed}/ORDERBOOK_SYM1_FULL.bz2 -o ../../../data/{configuration}{seed}/plots/SYM1_plot.png -c ../../../data/{configuration}{seed}/plots/plots_config.json;"
           f"python -u liquidity_telemetry.py ../../log/{configuration}{seed}/ExchangeAgent0.bz2 ../../log/{configuration}{seed}/ORDERBOOK_SYM2_FULL.bz2 -o ../../../data/{configuration}{seed}/plots/SYM2_plot.png -c ../../../data/{configuration}{seed}/plots/plots_config.json;"
-          # f"python -u liquidity_telemetry.py ../../log/{configuration}{seed}/ExchangeAgent0.bz2 ../../log/{configuration}{seed}/ORDERBOOK_SYM3_FULL.bz2 -o ../../../data/{configuration}{seed}/plots/SYM3_plot.png -c ../../../data/{configuration}{seed}/plots/plots_config.json;"
+          f"python -u liquidity_telemetry.py ../../log/{configuration}{seed}/ExchangeAgent0.bz2 ../../log/{configuration}{seed}/ORDERBOOK_SYM3_FULL.bz2 -o ../../../data/{configuration}{seed}/plots/SYM3_plot.png -c ../../../data/{configuration}{seed}/plots/plots_config.json;"
           )
 
 # eventually visualizes the charts in an app
 os.system(f"cd ..;"
           f"fim data/{configuration}{seed}/plots/;")
 
-'''
 # gets .csv of the simulation
 os.system(f"cd ..; ls; python get_csv_simulations.py --simulation_name {configuration}{seed}")
-'''
 
 print(f"Ended simulation {configuration} with seed {seed} and {scale} scale for {hours} hours")
 

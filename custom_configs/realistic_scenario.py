@@ -69,9 +69,10 @@ sigma_n = args.obs_noise
 # Shock variance of mean reversion process.
 sigma_s = args.shock_variance
 
-if seed is not None:
-    seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
-np.random.seed(seed)
+if seed is None:
+    # seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
+    seed = np.random.randint(0, 9999999999)
+np.random.seed(int((str(seed) + "1" * 10)[:10]))
 
 # Config parameter that causes util.util.print to suppress most output.
 # Also suppresses formatting of limit orders (which is time consuming).
