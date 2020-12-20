@@ -1,6 +1,9 @@
 import argparse
 import numpy as np
 
+# to run the simulation:
+# python run_simulation.py --seed 12345 --scale 0.2
+
 '''
 A R G U M E N T S
 P A R S I N G
@@ -96,7 +99,7 @@ os.system(f"cd ..;"
           f"fim data/{configuration}{seed}/plots/;")
 
 # gets .csv of the simulation
-os.system(f"cd ..; ls; python get_csv_simulations.py --simulation_name {configuration}{seed}")
+# os.system(f"cd ..; ls; python get_csv_simulations.py --simulation_name {configuration}{seed}")
 
 print(f"Ended simulation {configuration} with seed {seed} and {scale} scale for {hours} hours")
 
