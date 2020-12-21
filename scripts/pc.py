@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
 
-def rolling_mean(df, columns=[], seconds=5):
+def rolling_mean(df, columns=[], seconds=10):
     if isinstance(columns, str):
         columns = [columns]
     if len(columns) == 0:
@@ -40,22 +40,17 @@ for symbol_name in symbols_names:
                                           .rename(columns={'index': 'time'}).set_index("time")
     orderbook.index, orderbook_transacted.index = pd.to_datetime(orderbook.index), \
                                                   pd.to_datetime(orderbook_transacted.index)
-    mid_prices[symbol_name], transacted_volumes[symbol_name] = rolling_mean(orderbook, columns="MID_PRICE").values, \
-                                                               rolling_mean(orderbook, columns="SIZE").values
-
-sample_indexes = np.linspace(start=0, stop=mid_prices["ETF"].shape[0] - rows_to_drop, num=1000,
-                             endpoint=False, dtype=np.int)
-sample_indexes_transacted = np.linspace(start=0, stop=transacted_volumes["ETF"].shape[0] - rows_to_drop, num=1000,
-                                        endpoint=False, dtype=np.int)
+    mid_prices[symbol_name], transacted_volumes[symbol_name] = rolling_mean(orderbook, columns="MID_PRICE")["MID_PRICE"].values, \
+                                                               rolling_mean(orderbook, columns="SIZE")["SIZE"].values
 
 for symbol_name in symbols_names:
     fig, ax = plt.subplots(2)
     fig.suptitle(f'Plots for symbol {symbol_name}')
-    mid_price_ax = sns.lineplot(data=mid_prices[symbol_name][sample_indexes],
+    mid_price_ax = sns.lineplot(data=mid_prices[symbol_name],
                                 ax=ax[0])
     mid_price_ax.set(xticklabels=[], xlabel="Time", ylabel="Mid price")
 
-    size_ax = sns.lineplot(data=transacted_volumes[symbol_name][sample_indexes_transacted],
+    size_ax = sns.lineplot(data=transacted_volumes[symbol_name],
                            ax=ax[1])
     size_ax.set(xticklabels=[], xlabel="Time", ylabel="Transacted volume")
 plt.tight_layout()
@@ -96,8 +91,8 @@ def get_manifold(*time_series, plot=True):
 
 def get_nn_and_distances(manifold, num_nn=5):
     # distances = distance_matrix(manifold, manifold, p=1)
-    nn_distances, nn_indices = NearestNeighbors(n_neighbors=num_nn + 1, metric="manhattan", algorithm="auto").fit(
-        manifold).kneighbors(manifold)
+    nn_distances, nn_indices = NearestNeighbors(n_neighbors=num_nn + 1, metric="manhattan", algorithm="auto")\
+        .fit(manifold).kneighbors(manifold)
     nn_distances, nn_indices = nn_distances[:, 1:], nn_indices[:, 1:]
 
     w = np.exp(-nn_distances) / \
@@ -133,13 +128,10 @@ def PC(*time_series, E=3, tau=1):
         w += [nn[0]]
         nn_indices += [nn[1]]
 
-    nn_S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1) for i in
-            range(len(manifolds))]
-
-    print(nn_S[0][:7])
+    nn_S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1)
+            for i in range(len(manifolds))]
 
     # w = [np.exp(np.abs()) for manifold in manifolds]
     print("Ok")
 
-
-PC([mid_prices[symbol_name][sample_indexes] for symbol_name in symbols_names])
+PC([mid_prices[symbol_name] for symbol_name in symbols_names])
