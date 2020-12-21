@@ -1,5 +1,6 @@
 /data/
 !/data/.gitkeep
+!/data/realistic_scenario123456/
 
 /abides/log/
 !/abides/log/.gitkeep
