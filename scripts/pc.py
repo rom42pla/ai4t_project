@@ -16,7 +16,7 @@ import seaborn as sns
 import argparse
 
 parser = argparse.ArgumentParser(description='Detailed options for PC')
-parser.add_argument('--simulation_name', default="realistic_scenario654321",
+parser.add_argument('--simulation_name', default="realistic_scenario123456",
                     help='Seed for the random generator')
 parser.add_argument('--seed', default=123456, type=int,
                     help='Seed for the random generator')
@@ -169,6 +169,7 @@ def PC(*time_series, E=3, tau=1):
                 print(signature1, signature2)
             pattern_causalities[i_pattern_causality] = ((E - 1) / product) if np.isfinite(
                 product) and product != 0 else 0
+        # todo fixare sto schifo
         causality_factor = pattern_causalities.mean()
         causalities_matrix[i1, i2] = causality_factor
         causalities_matrix[i2, i1] = causality_factor

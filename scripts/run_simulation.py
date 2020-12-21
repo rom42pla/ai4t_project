@@ -20,9 +20,9 @@ parser.add_argument('--plot_config', type=str, default="plot_realistic_scenario"
 
 parser.add_argument('--seed', type=int, default=np.random.randint(100, 999999),
                     help='seed of the simulation')
-parser.add_argument('--scale', type=float, default=1,
+parser.add_argument('--scale', type=float, default=0.3,
                     help='scale of the simulation (proportion of agents wrt full simulation)')
-parser.add_argument('--hours', type=float, default=1,
+parser.add_argument('--hours', type=float, default=2,
                     help='hours of simulation to reproduce, '
                          'starting always from 09:00AM up to 17:00PM')
 
