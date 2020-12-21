@@ -72,7 +72,7 @@ sigma_s = args.shock_variance
 if seed is None:
     # seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
     seed = np.random.randint(0, 9999999999)
-np.random.seed(int((str(seed) + "1" * 10)[:10]))
+np.random.seed(seed)
 
 # Config parameter that causes util.util.print to suppress most output.
 # Also suppresses formatting of limit orders (which is time consuming).
@@ -216,6 +216,7 @@ assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 '''
 P R I N T S
 '''
+# symbols
 symbols_names = list(symbols_full.keys())
 print(pd.DataFrame(
     dtype=int,
@@ -228,6 +229,8 @@ print(pd.DataFrame(
     }
 ).to_string())
 print(f"Scale of simulation: {scale}")
+
+# events
 print(pd.DataFrame(
     data={
         "event": ["Primary open", "Primary close",
@@ -236,6 +239,8 @@ print(pd.DataFrame(
                  secondary_market_open, secondary_market_close]
     }
 ).sort_values(by=['date']).to_string(index=False))
+
+# agents
 print(pd.DataFrame(
     dtype=int,
     index=["Exchange",
@@ -277,15 +282,14 @@ print(pd.DataFrame(
     }
 ).to_string())
 
-'''
+# impacts
 if len(impacts.keys()) > 0:
-    df = pd.DataFrame()
-    for etf in impacts:
-        df_etf = pd.DataFrame.from_dict(impacts[etf])
-        df_etf["symbol"] = etf
-        df = pd.concat([df, df_etf])
-    print(df.sort_values(by=["symbol", "time"]).to_string(index=False))
-'''
+    df_impacts = pd.DataFrame()
+    for symbol in impacts:
+        df_etf = pd.DataFrame.from_dict(impacts[symbol])
+        df_etf["symbol"] = symbol
+        df_impacts = pd.concat([df_impacts, df_etf])
+    print(df_impacts.sort_values(by=["symbol", "time"]).to_string(index=False))
 
 '''
 EXCHANGE AGENTS
@@ -332,8 +336,7 @@ for symbol_name, infos in symbols_full.items():
     if symbol_name in impacts.keys():
         for impact_dict in impacts[symbol_name]:
             agents.append(
-                ImpactAgent(len(agents), "Impact Agent {} {}".format(symbol_name, len(agents)),
-                            "ImpactAgent{}{}".format(symbol_name, len(agents)),
+                ImpactAgent(len(agents), "Impact Agent {} {}".format(symbol_name, len(agents)), "ImpactAgent",
                             symbol=symbol_name, starting_cash=impact_dict["starting_cash"], greed=impact_dict["greed"],
                             impact=True, impact_time=midnight + pd.to_timedelta(impact_dict["time"]),
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))

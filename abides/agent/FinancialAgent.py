@@ -1,3 +1,5 @@
+import numpy as np
+
 from agent.Agent import Agent
 import sys
 import traceback
@@ -25,6 +27,8 @@ class FinancialAgent(Agent):
 # utility access by non-agent classes.
 
 def dollarize(cents):
+  if isinstance(cents, np.int64):
+    cents = int(cents)
   if type(cents) is list:
     return ( [ dollarize(x) for x in cents ] )
   elif type(cents) is int:

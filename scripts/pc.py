@@ -1,6 +1,9 @@
+import time
+import json
 from pprint import pprint
 from os import listdir
 from os.path import join
+from itertools import combinations
 
 import numpy as np
 from scipy.spatial import distance_matrix
@@ -9,6 +12,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
+
+import argparse
+
+parser = argparse.ArgumentParser(description='Detailed options for PC')
+parser.add_argument('--simulation_name', default="realistic_scenario654321",
+                    help='Seed for the random generator')
+parser.add_argument('--seed', default=123456, type=int,
+                    help='Seed for the random generator')
+args = parser.parse_args()
+
+seed = args.seed
+np.random.seed(seed)
 
 
 def rolling_mean(df, columns=[], seconds=10):
@@ -26,22 +41,27 @@ def rolling_mean(df, columns=[], seconds=10):
 
 
 data_path = join("..", "data")
-sample_simulation_path = join(data_path, "realistic_scenario123456")
+simulation_path = join(data_path, args.simulation_name)
 
 symbols_names = ["ETF", "SYM1", "SYM2", "SYM3"]
 rows_to_drop = 5000
 mid_prices, transacted_volumes = {}, {}
+print(f"Computing rolling mean to reduce instants of time...")
+starting_time = time.time()
 for symbol_name in symbols_names:
-    orderbook, orderbook_transacted = pd.read_csv(join(sample_simulation_path,
+    orderbook, orderbook_transacted = pd.read_csv(join(simulation_path,
                                                        f"ORDERBOOK_{symbol_name}_FULL_processed_orderbook.csv")) \
                                           .rename(columns={'index': 'time'}).set_index("time"), \
-                                      pd.read_csv(join(sample_simulation_path,
+                                      pd.read_csv(join(simulation_path,
                                                        f"ORDERBOOK_{symbol_name}_FULL_transacted_orders.csv")) \
                                           .rename(columns={'index': 'time'}).set_index("time")
     orderbook.index, orderbook_transacted.index = pd.to_datetime(orderbook.index), \
                                                   pd.to_datetime(orderbook_transacted.index)
-    mid_prices[symbol_name], transacted_volumes[symbol_name] = rolling_mean(orderbook, columns="MID_PRICE")["MID_PRICE"].values, \
+
+    mid_prices[symbol_name], transacted_volumes[symbol_name] = rolling_mean(orderbook, columns="MID_PRICE")[
+                                                                   "MID_PRICE"].values, \
                                                                rolling_mean(orderbook, columns="SIZE")["SIZE"].values
+print(f"Done in {time.time() - starting_time}")
 
 for symbol_name in symbols_names:
     fig, ax = plt.subplots(2)
@@ -91,7 +111,7 @@ def get_manifold(*time_series, plot=True):
 
 def get_nn_and_distances(manifold, num_nn=5):
     # distances = distance_matrix(manifold, manifold, p=1)
-    nn_distances, nn_indices = NearestNeighbors(n_neighbors=num_nn + 1, metric="manhattan", algorithm="auto")\
+    nn_distances, nn_indices = NearestNeighbors(n_neighbors=num_nn + 1, metric="manhattan", algorithm="auto") \
         .fit(manifold).kneighbors(manifold)
     nn_distances, nn_indices = nn_distances[:, 1:], nn_indices[:, 1:]
 
@@ -99,6 +119,13 @@ def get_nn_and_distances(manifold, num_nn=5):
         (np.sum(np.exp(-nn_distances)))
 
     return w, nn_indices
+
+
+def signature(a):
+    a = a.copy()
+    a[a > 0] = 1
+    a[a < 0] = -1
+    return a
 
 
 def PC(*time_series, E=3, tau=1):
@@ -128,10 +155,45 @@ def PC(*time_series, E=3, tau=1):
         w += [nn[0]]
         nn_indices += [nn[1]]
 
-    nn_S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1)
-            for i in range(len(manifolds))]
+    S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1)
+         for i in range(len(manifolds))]
 
-    # w = [np.exp(np.abs()) for manifold in manifolds]
-    print("Ok")
+    P = [signature(S[i]) for i in range(len(manifolds))]
 
-PC([mid_prices[symbol_name] for symbol_name in symbols_names])
+    causalities_matrix = np.zeros(shape=(len(manifolds), len(manifolds)))
+    for i1, i2 in list(combinations(range(len(manifolds)), 2)):
+        pattern_causalities = np.zeros(shape=P[0].shape[0])
+        for i_pattern_causality, (signature1, signature2) in enumerate(list(zip(P[i1], P[i2]))):
+            product = np.dot(signature1, signature2)
+            if not (np.isfinite(product)):
+                print(signature1, signature2)
+            pattern_causalities[i_pattern_causality] = ((E - 1) / product) if np.isfinite(
+                product) and product != 0 else 0
+        causality_factor = pattern_causalities.mean()
+        causalities_matrix[i1, i2] = causality_factor
+        causalities_matrix[i2, i1] = causality_factor
+    return causalities_matrix
+
+
+print(f"Computing PC between couple of symbols...")
+starting_time = time.time()
+# computes PC between the symbols
+causalities = PC([mid_prices[symbol_name] for symbol_name in symbols_names])
+
+# outputs the results
+causalities_json = {}
+for i_symbol1, i_symbol2 in list(combinations(range(len(causalities)), 2)):
+    symbol_name1, symbol_name2 = symbols_names[i_symbol1], symbols_names[i_symbol2]
+    causality_strength = causalities[i_symbol1][i_symbol2]
+    if not symbol_name1 in causalities_json:
+        causalities_json[symbol_name1] = {}
+    if not symbol_name2 in causalities_json:
+        causalities_json[symbol_name2] = {}
+    causalities_json[symbol_name1][symbol_name2] = causality_strength
+    causalities_json[symbol_name2][symbol_name1] = causality_strength
+# saves into a file
+with open(join(simulation_path, "pc.json"), "w") as fp:
+    json.dump(causalities_json, fp, indent=4)
+pprint(causalities_json)
+print(f"Done in {time.time() - starting_time}")
+
