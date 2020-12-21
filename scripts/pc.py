@@ -10,6 +10,21 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
+
+def rolling_mean(df, columns=[], seconds=5):
+    if isinstance(columns, str):
+        columns = [columns]
+    if len(columns) == 0:
+        columns = list(df.columns)
+    df = df.copy().loc[:, columns]
+
+    out = pd.DataFrame(columns=columns)
+    for i, g in df.groupby([(pd.to_datetime(df.index) - pd.to_datetime(df.index)[0])
+                                    .astype(f'timedelta64[{seconds}s]')]):
+        out = out.append(g.mean(), ignore_index=True)
+    return out
+
+
 data_path = join("..", "data")
 sample_simulation_path = join(data_path, "realistic_scenario123456")
 
@@ -17,16 +32,16 @@ symbols_names = ["ETF", "SYM1", "SYM2", "SYM3"]
 rows_to_drop = 5000
 mid_prices, transacted_volumes = {}, {}
 for symbol_name in symbols_names:
-    orderbook, orderbook_transacted = pd.read_csv(
-        join(sample_simulation_path, f"ORDERBOOK_{symbol_name}_FULL_processed_orderbook.csv")).rename(
-        columns={'index': 'time'}), \
+    orderbook, orderbook_transacted = pd.read_csv(join(sample_simulation_path,
+                                                       f"ORDERBOOK_{symbol_name}_FULL_processed_orderbook.csv")) \
+                                          .rename(columns={'index': 'time'}).set_index("time"), \
                                       pd.read_csv(join(sample_simulation_path,
-                                                       f"ORDERBOOK_{symbol_name}_FULL_transacted_orders.csv")).rename(
-                                          columns={'index': 'time'})
-    mid_prices[symbol_name], transacted_volumes[symbol_name] = orderbook["MID_PRICE"].values[rows_to_drop:], \
-                                                               orderbook_transacted["SIZE"].values[rows_to_drop:]
-
-
+                                                       f"ORDERBOOK_{symbol_name}_FULL_transacted_orders.csv")) \
+                                          .rename(columns={'index': 'time'}).set_index("time")
+    orderbook.index, orderbook_transacted.index = pd.to_datetime(orderbook.index), \
+                                                  pd.to_datetime(orderbook_transacted.index)
+    mid_prices[symbol_name], transacted_volumes[symbol_name] = rolling_mean(orderbook, columns="MID_PRICE").values, \
+                                                               rolling_mean(orderbook, columns="SIZE").values
 
 sample_indexes = np.linspace(start=0, stop=mid_prices["ETF"].shape[0] - rows_to_drop, num=1000,
                              endpoint=False, dtype=np.int)
@@ -118,7 +133,8 @@ def PC(*time_series, E=3, tau=1):
         w += [nn[0]]
         nn_indices += [nn[1]]
 
-    nn_S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1) for i in range(len(manifolds))]
+    nn_S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1) for i in
+            range(len(manifolds))]
 
     print(nn_S[0][:7])
 
