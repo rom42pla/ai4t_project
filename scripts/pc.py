@@ -26,6 +26,8 @@ for symbol_name in symbols_names:
     mid_prices[symbol_name], transacted_volumes[symbol_name] = orderbook["MID_PRICE"].values[rows_to_drop:], \
                                                                orderbook_transacted["SIZE"].values[rows_to_drop:]
 
+
+
 sample_indexes = np.linspace(start=0, stop=mid_prices["ETF"].shape[0] - rows_to_drop, num=1000,
                              endpoint=False, dtype=np.int)
 sample_indexes_transacted = np.linspace(start=0, stop=transacted_volumes["ETF"].shape[0] - rows_to_drop, num=1000,
@@ -110,24 +112,15 @@ def PC(*time_series, E=3, tau=1):
     s = [(manifold[:, :-1] - manifold[:, 1:]) / manifold[:, 1:]
          for manifold in manifolds]
 
-
-
-
     w, nn_indices = [], []
     for manifold in manifolds:
         nn = get_nn_and_distances(manifold=manifold, num_nn=5)
         w += [nn[0]]
         nn_indices += [nn[1]]
-    nn_S = []
-    for i, manifold in enumerate(manifolds):
-        #print(s[i].shape)
-        #print(nn_indices[i].shape)
-        #print(s[i][nn_indices[i]].shape)
-        #print(w[i].shape)
-        print(w[i].shape)
-        print(s[i].shape)
-        #print(w[i].shape, s[i][nn_indices[i], :].shape)
-        nn_S += [np.sum([w[i] * s[i][nn_indices[i]]])]
+
+    nn_S = [np.sum(np.array([w[i], w[i]]).transpose((1, 2, 0)) * s[i][nn_indices[i]], axis=1) for i in range(len(manifolds))]
+
+    print(nn_S[0][:7])
 
     # w = [np.exp(np.abs()) for manifold in manifolds]
     print("Ok")
