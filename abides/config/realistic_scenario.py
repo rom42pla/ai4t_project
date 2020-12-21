@@ -165,7 +165,7 @@ zero_intelligence_configs = [
 ]
 
 # value agents
-num_value_agents = int(np.ceil(scale * 70))
+num_value_agents = int(np.ceil(scale * 70))  # li ho messi a 70 per un ultimo test che però non ho portato a termine
 kappa = 1.67e-15
 # momentum agents
 num_momentum_agents = int(np.ceil(scale * 25))
