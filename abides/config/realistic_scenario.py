@@ -70,9 +70,9 @@ sigma_n = args.obs_noise
 sigma_s = args.shock_variance
 
 if seed is None:
-    #seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
+    # seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
     seed = np.random.randint(0, 9999999999)
-np.random.seed(int((str(seed) + "1"*10)[:10]))
+np.random.seed(int((str(seed) + "1" * 10)[:10]))
 
 # Config parameter that causes util.util.print to suppress most output.
 # Also suppresses formatting of limit orders (which is time consuming).
@@ -165,10 +165,10 @@ zero_intelligence_configs = [
 ]
 
 # value agents
-num_value_agents = int(np.ceil(scale * 100))
+num_value_agents = int(np.ceil(scale * 70))
 kappa = 1.67e-15
 # momentum agents
-num_momentum_agents = 0  # int(np.ceil(scale * 25))
+num_momentum_agents = int(np.ceil(scale * 25))
 num_heuristic_belief_learning_agents = 0  # int(np.ceil(scale * 40))
 # ETF arbitrage agents
 num_etf_arbitrage_agents = int(np.ceil(scale * 50))
@@ -209,7 +209,7 @@ impacts = {
                                                num=num_impacts + 2)[1:-1]
              for subimpact_time in dates_linspace(start=impact_time - pd.Timedelta(30, unit="seconds"),
                                                   stop=impact_time + pd.Timedelta(30, unit="seconds"),
-                                                  num=6)]
+                                                  num=12)]
 }
 assert set(impacts.keys()).issubset(set(symbols_full.keys()))
 
@@ -454,7 +454,7 @@ for symbol_name, infos in symbols_full.items():
                             "Etf Arb Agent {}".format(len(agents)),
                             "EtfArbAgent",
                             portfolio=portfolio, gamma=250,
-                            starting_cash=starting_cents, lambda_a=arrival_lambda, log_orders=log_orders,
+                            starting_cash=starting_cents, lambda_a=arrival_lambda * 1e1, log_orders=log_orders,
                             random_state=np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32))))
             agent_types.append("EtfArbAgent")
 
@@ -466,7 +466,7 @@ for symbol_name, infos in symbols_full.items():
                                               "Etf MM Agent {}".format(len(agents)),
                                               "EtfMarketMakerAgent",
                                               portfolio=portfolio, starting_cash=starting_cents,
-                                              gamma=250, lambda_a=(arrival_lambda) * 1e-2,
+                                              gamma=250, lambda_a=(arrival_lambda) * 1e1,
                                               log_orders=log_orders,
                                               random_state=np.random.RandomState(
                                                   seed=np.random.randint(low=0, high=2 ** 32))))
