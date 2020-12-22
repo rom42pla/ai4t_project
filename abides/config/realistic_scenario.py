@@ -171,9 +171,9 @@ kappa = 1.67e-15
 num_momentum_agents = int(np.ceil(scale * 25))
 num_heuristic_belief_learning_agents = 0  # int(np.ceil(scale * 40))
 # ETF arbitrage agents
-num_etf_arbitrage_agents = int(np.ceil(scale * 50))
+num_etf_arbitrage_agents = 0 # int(np.ceil(scale * 50))
 # ETF market maker agents
-num_etf_market_maker_agents = int(np.ceil(scale * 50))
+num_etf_market_maker_agents = 0 # int(np.ceil(scale * 50))
 # market maker agents
 num_pov_market_maker_agents = int(np.ceil(scale * 1))
 # pov execution agents
