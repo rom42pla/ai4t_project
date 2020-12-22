@@ -14,6 +14,7 @@ This environment is of course populated with different agents behaving in differ
 
 At the end of each simulation you'll be prompted with some **plots** of the mid price, spread and transaction volume of each symbol involved alongside the **strength of the causalities** of each symbol to the other to see if they have a positive, negative or dark correlation.
 
+Beware that **PC algorithm** is just a sketch and is not to be considered a final release, since it only accounts for positive causalities.
 
 ## Check the results
 To check our result you'll have to install the requirements and run a simulation, at the end of which you'll be prompted with plots and causality stats for each symbol, also saved into `data\<simulation_name>`.
